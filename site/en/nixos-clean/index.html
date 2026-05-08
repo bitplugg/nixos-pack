@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nixos-clean — nixos-pack</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>❄️</text></svg>">
+<link rel="stylesheet" href="../../site.css">
+<script src="../../sidebar.js" defer></script>
+<div id="sidebar"></div>
+<div id="content">
+<h1>nixos-clean</h1>
+<p class="subtitle">Nix store GC TUI with generation overview</p>
+
+<h2>Description</h2>
+<p>Shows a clean overview of all system generations and current nix store size, then runs garbage collection. Supports dry-run and full (historical) cleanup modes.</p>
+
+<h2>Usage</h2>
+<pre>nixos-clean
+nixos-clean --dry-run
+nixos-clean --full</pre>
+
+<h2>Options</h2>
+<table>
+  <tr><th>Flag</th><th>Description</th></tr>
+  <tr><td><code>--dry-run</code></td><td>Show how much would be freed without deleting</td></tr>
+  <tr><td><code>--full</code></td><td>Collect all historical garbage (including old generations)</td></tr>
+</table>
+
+<h2>NixOS module</h2>
+<pre>nixos-pack.nixosModules.nixos-clean</pre>
+
+<h2>Home-Manager module</h2>
+<pre>nixos-pack.homeManagerModules.nixos-clean</pre>
+
+<div class="footer"><a href="https://github.com/bitplugg/nixos-pack">GitHub</a> · MIT</div>
+</div>
+<script>document.addEventListener("DOMContentLoaded", buildSidebar);</script>
+</html>

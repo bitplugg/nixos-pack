@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nixos-top — nixos-pack</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>❄️</text></svg>">
+<link rel="stylesheet" href="../../site.css">
+<script src="../../sidebar.js" defer></script>
+<div id="sidebar"></div>
+<div id="content">
+<h1>nixos-top</h1>
+<p class="subtitle">Real-time system monitor</p>
+
+<h2>Description</h2>
+<p>Live-updating terminal dashboard showing: load averages, memory usage, top systemd units by CPU, and recent journal errors. Updates every 2 seconds by default.</p>
+
+<h2>Usage</h2>
+<pre>nixos-top
+nixos-top -n 5</pre>
+
+<h2>Options</h2>
+<table>
+  <tr><th>Flag</th><th>Description</th></tr>
+  <tr><td><code>-n</code></td><td>Update interval in seconds (default 2)</td></tr>
+</table>
+
+<h2>NixOS module</h2>
+<pre>nixos-pack.nixosModules.nixos-top</pre>
+
+<h2>Home-Manager module</h2>
+<pre>nixos-pack.homeManagerModules.nixos-top</pre>
+
+<div class="footer"><a href="https://github.com/bitplugg/nixos-pack">GitHub</a> · MIT</div>
+</div>
+<script>document.addEventListener("DOMContentLoaded", buildSidebar);</script>
+</html>
