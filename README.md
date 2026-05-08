@@ -236,6 +236,21 @@ Import a package as a NixOS module — it will be added to `environment.systemPa
 nix profile install github:bitplugg/nixos-pack#nixos-module-graph
 ```
 
+## 📋 Changelog
+
+### 2026-05-08
+- Add **219 bundled .nyx plugins** for nyx CLI (system info, network, NixOS, security, dev tools, monitoring, filesystem, users, utilities)
+- Add **Plugin Store** page to site with dynamic table, ratings, language filter
+- Add bundled plugins discovery path to nyx CLI (`nyx <plugin>` works out of the box)
+- Add plugin table CSS and bilingual plugin store article (EN/RU)
+- Install plugins to `$out/share/nyx/plugins/` in the nyx derivation
+
+### Earlier
+- Add nyx doctor/install/init/plugins + autocompletion + .nyx examples + CI + all modules
+- Add 13 utility packages: nixos-module-graph, nixos-health, nixos-build-tui, nix-diff-lock, system-report, nixos-flake-update, nixos-switch-diff, nixos-clean, nixos-log, nixos-top, brrtfetch, rkn-block-checker, nyx
+- Add bilingual site (EN/RU) with GitHub Pages deployment
+- Initial flake with overlays, NixOS modules, Home-Manager modules
+
 ## 🧑‍💻 Maintainer
 
 - [bitplugg](https://github.com/bitplugg) — zxckillka.off@gmail.com
