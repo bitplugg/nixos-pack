@@ -3,15 +3,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>system-report — nixos-pack</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>❄️</text></svg>">
 <link rel="stylesheet" href="../site.css">
-<nav class="top"><a href="../index.html">← назад</a> / system-report</nav>
+<script src="../sidebar.js" defer></script>
+<div id="sidebar"></div>
+<div id="content">
 <h1>system-report</h1>
 <p class="subtitle">JSON инвентаризация системы</p>
 
 <h2>Описание</h2>
-<p>Собирает информацию о системе в единый JSON документ:
-установленные пакеты, активные systemd юниты, открытые порты,
-точки монтирования, параметры ядра и информацию о железе.</p>
+<p>Собирает информацию о системе в единый JSON документ: установленные пакеты, активные systemd юниты, открытые порты, точки монтирования, параметры ядра и информацию о железе.</p>
 
 <h2>Использование</h2>
 <pre>system-report
@@ -34,4 +35,8 @@ system-report --pretty</pre>
 
 <h2>Модуль Home-Manager</h2>
 <pre>nixos-pack.homeManagerModules.system-report</pre>
+
+<div class="footer"><a href="https://github.com/bitplugg/nixos-pack">GitHub</a> · MIT</div>
+</div>
+<script>document.addEventListener("DOMContentLoaded", buildSidebar);</script>
 </html>

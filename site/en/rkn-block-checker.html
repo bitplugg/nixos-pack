@@ -3,15 +3,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>rkn-block-checker — nixos-pack</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>❄️</text></svg>">
 <link rel="stylesheet" href="../site.css">
-<nav class="top"><a href="../index.html">← back</a> / rkn-block-checker</nav>
+<script src="../sidebar.js" defer></script>
+<div id="sidebar"></div>
+<div id="content">
 <h1>rkn-block-checker</h1>
 <p class="subtitle">Multi-layer internet censorship diagnostics</p>
 
 <h2>Description</h2>
-<p>Diagnoses network blocks (RKN/TSPU) by testing connectivity at
-every layer: DNS resolution → TCP connection → TLS handshake → HTTP response.
-Identifies exactly where and how a resource is blocked.</p>
+<p>Diagnoses network blocks (RKN/TSPU) by testing connectivity at every layer: DNS → TCP → TLS → HTTP. Identifies exactly where and how a resource is blocked.</p>
 
 <h2>Usage</h2>
 <pre>rkn-block-checker example.com
@@ -33,4 +34,8 @@ rkn-block-checker --verbose example.com</pre>
 
 <h2>Home-Manager module</h2>
 <pre>nixos-pack.homeManagerModules.rkn-block-checker</pre>
+
+<div class="footer"><a href="https://github.com/bitplugg/nixos-pack">GitHub</a> · MIT</div>
+</div>
+<script>document.addEventListener("DOMContentLoaded", buildSidebar);</script>
 </html>

@@ -3,15 +3,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>nixos-health — nixos-pack</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>❄️</text></svg>">
 <link rel="stylesheet" href="../site.css">
-<nav class="top"><a href="../index.html">← back</a> / nixos-health</nav>
+<script src="../sidebar.js" defer></script>
+<div id="sidebar"></div>
+<div id="content">
 <h1>nixos-health</h1>
 <p class="subtitle">Quick NixOS system health checks</p>
 
 <h2>Description</h2>
-<p>Runs a battery of health checks against your NixOS system:
-channel age, disk space, journal errors, swap usage, DNS resolution,
-failed systemd units, and more.</p>
+<p>Runs a battery of health checks against your NixOS system: channel age, disk space, journal errors, swap usage, DNS resolution, failed systemd units, and more.</p>
 
 <h2>Usage</h2>
 <pre>nixos-health
@@ -35,4 +36,8 @@ nixos-health --check all</pre>
 
 <h2>Home-Manager module</h2>
 <pre>nixos-pack.homeManagerModules.nixos-health</pre>
+
+<div class="footer"><a href="https://github.com/bitplugg/nixos-pack">GitHub</a> · MIT</div>
+</div>
+<script>document.addEventListener("DOMContentLoaded", buildSidebar);</script>
 </html>

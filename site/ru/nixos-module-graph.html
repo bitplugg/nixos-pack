@@ -3,14 +3,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>nixos-module-graph — nixos-pack</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>❄️</text></svg>">
 <link rel="stylesheet" href="../site.css">
-<nav class="top"><a href="../index.html">← назад</a> / nixos-module-graph</nav>
+<script src="../sidebar.js" defer></script>
+<div id="sidebar"></div>
+<div id="content">
 <h1>nixos-module-graph</h1>
 <p class="subtitle">Анализ структуры импортов модулей NixOS</p>
 
 <h2>Описание</h2>
-<p>Обходит дерево <code>imports = [...]</code> NixOS модуля и строит граф зависимостей.
-Поддерживает HTML (d3.js), DOT, JSON и текстовый вывод.</p>
+<p>Обходит дерево <code>imports = [...]</code> NixOS модуля и строит граф зависимостей. Поддерживает HTML (d3.js), DOT, JSON и текстовый вывод.</p>
 
 <h2>Использование</h2>
 <pre>nixos-module-graph --config /etc/nixos/configuration.nix
@@ -35,9 +37,9 @@ nixos-module-graph --flake .#my-server --output graph.html</pre>
 
 <h2>Форматы вывода</h2>
 <ul>
-  <li><strong>HTML</strong> — интерактивный граф с d3.js (зум, панорамирование, клик)</li>
-  <li><strong>DOT</strong> — формат Graphviz (<code>dot -Tpng graph.dot -o graph.png</code>)</li>
-  <li><strong>JSON</strong> — машиночитаемые узлы, рёбра, информация об опциях</li>
+  <li><strong>HTML</strong> — интерактивный граф с d3.js</li>
+  <li><strong>DOT</strong> — формат Graphviz</li>
+  <li><strong>JSON</strong> — машиночитаемые узлы, рёбра, опции</li>
   <li><strong>Text</strong> — цветное ASCII дерево в терминале</li>
 </ul>
 
@@ -46,4 +48,8 @@ nixos-module-graph --flake .#my-server --output graph.html</pre>
 
 <h2>Модуль Home-Manager</h2>
 <pre>nixos-pack.homeManagerModules.nixos-module-graph</pre>
+
+<div class="footer"><a href="https://github.com/bitplugg/nixos-pack">GitHub</a> · MIT</div>
+</div>
+<script>document.addEventListener("DOMContentLoaded", buildSidebar);</script>
 </html>

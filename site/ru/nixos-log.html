@@ -3,15 +3,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>nixos-log — nixos-pack</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>❄️</text></svg>">
 <link rel="stylesheet" href="../site.css">
-<nav class="top"><a href="../index.html">← назад</a> / nixos-log</nav>
+<script src="../sidebar.js" defer></script>
+<div id="sidebar"></div>
+<div id="content">
 <h1>nixos-log</h1>
 <p class="subtitle">Просмотр journalctl с подсветкой</p>
 
 <h2>Описание</h2>
-<p>Обёртка для <code>journalctl</code> с подсветкой синтаксиса:
-ошибки красным, предупреждения жёлтым, запуски сервисов зелёным.
-Все флаги передаются journalctl.</p>
+<p>Обёртка для <code>journalctl</code> с подсветкой синтаксиса: ошибки красным, предупреждения жёлтым, запуски сервисов зелёным. Все флаги передаются journalctl.</p>
 
 <h2>Использование</h2>
 <pre>nixos-log
@@ -24,4 +25,8 @@ nixos-log -p 5 -n 100</pre>
 
 <h2>Модуль Home-Manager</h2>
 <pre>nixos-pack.homeManagerModules.nixos-log</pre>
+
+<div class="footer"><a href="https://github.com/bitplugg/nixos-pack">GitHub</a> · MIT</div>
+</div>
+<script>document.addEventListener("DOMContentLoaded", buildSidebar);</script>
 </html>

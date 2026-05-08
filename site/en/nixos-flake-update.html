@@ -3,15 +3,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>nixos-flake-update — nixos-pack</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>❄️</text></svg>">
 <link rel="stylesheet" href="../site.css">
-<nav class="top"><a href="../index.html">← back</a> / nixos-flake-update</nav>
+<script src="../sidebar.js" defer></script>
+<div id="sidebar"></div>
+<div id="content">
 <h1>nixos-flake-update</h1>
 <p class="subtitle">TUI for selectively updating flake inputs</p>
 
 <h2>Description</h2>
-<p>Interactive TUI that reads your <code>flake.nix</code> inputs, shows current
-locked revisions from <code>flake.lock</code>, and lets you pick which inputs
-to update — or update all at once.</p>
+<p>Interactive TUI that reads your <code>flake.nix</code> inputs, shows current locked revisions from <code>flake.lock</code>, and lets you pick which inputs to update — or update all at once.</p>
 
 <h2>Usage</h2>
 <pre>nixos-flake-update</pre>
@@ -29,4 +30,8 @@ to update — or update all at once.</p>
 
 <h2>Home-Manager module</h2>
 <pre>nixos-pack.homeManagerModules.nixos-flake-update</pre>
+
+<div class="footer"><a href="https://github.com/bitplugg/nixos-pack">GitHub</a> · MIT</div>
+</div>
+<script>document.addEventListener("DOMContentLoaded", buildSidebar);</script>
 </html>
