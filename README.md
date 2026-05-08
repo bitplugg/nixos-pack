@@ -65,6 +65,6 @@ import nixos-pack.overlays.default  # adds brrtfetch & rkn-block-checker to pkgs
 - [bitplugg](https://github.com/bitplugg)
 
 ## 📄 License
-
+VR
 MIT
 >>>>>>> 2b97dae (upd readme)
