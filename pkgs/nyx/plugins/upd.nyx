@@ -1,0 +1,8 @@
+# description: Update NixOS flake and rebuild system
+# version: 0.1.0
+# author: user
+import os
+import subprocess
+
+cmd = "clear && cd $HOME/nixos-config && clear && maxfetch && sudo nixos-rebuild switch --flake .#laptop && echo 'Done! Please check'"
+subprocess.run(cmd, shell=True)
