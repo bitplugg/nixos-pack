@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+# nixos-build-tui – interactive TUI for nixos-rebuild
+# Author: bitplugg
+set -euo pipefail
+
+NIXOS_REBUILD="@nixos-rebuild@"
+
+if [ ! -x "$NIXOS_REBUILD" ]; then
+  NIXOS_REBUILD="nixos-rebuild"
+fi
+
+RED=1; GREEN=2; YELLOW=3; CYAN=6; BOLD=7; DIM=2
+
+cecho() { printf "\033[%sm%s\033[0m\n" "$1" "$2"; }
+
+header() {
+  clear
+  cecho $BOLD "┌────────────────────────────────────────────┐"
+  cecho $BOLD "│         nixos-build-tui                    │"
+  printf "\033[%sm│  %-42s│\033[0m\n" $DIM "NixOS rebuilder"
+  cecho $BOLD "└────────────────────────────────────────────┘"
+  echo ""
+  echo "  hostname : $(hostname)"
+  echo "  system   : $(uname -r)"
+  if [ -f ./flake.lock ] || [ -f "$PWD/flake.lock" ]; then
+    lockfile="${PWD}/flake.lock"
+    [ ! -f "$lockfile" ] && lockfile="$(pwd)/flake.lock"
+    mtime=$(stat -c %Y "$lockfile" 2>/dev/null || echo 0)
+    now=$(date +%s)
+    days=$(( (now - mtime) / 86400 ))
+    echo "  flake    : $(pwd) (${days}d old)"
+  fi
+  echo ""
+}
+
+menu() {
+  echo "  Select action:"
+  echo ""
+  echo "    [1] switch   — activate + add to boot menu"
+  echo "    [2] boot     — add to boot menu only"
+  echo "    [3] test     — activate but don't add to boot menu"
+  echo "    [4] dry-activate — dry run"
+  echo "    [5] build    — build only"
+  echo "    [6] rollback — switch to previous generation"
+  echo "    [7] list-generations"
+  echo "    [0] exit"
+  echo ""
+  read -rp "  choice [0-7]: " choice
+  echo ""
+}
+
+run_rebuild() {
+  local action=$1; shift
+  cecho $CYAN "  → nixos-rebuild $action $*"
+  echo ""
+  $NIXOS_REBUILD "$action" "$@"
+  rc=$?
+  echo ""
+  if [ $rc -eq 0 ]; then
+    cecho $GREEN "  ✓ done"
+  else
+    cecho $RED "  ✗ failed (exit $rc)"
+  fi
+  echo ""
+  read -rp "  press enter to continue..."
+}
+
+rollback() {
+  cecho $YELLOW "  → rolling back to previous generation..."
+  echo ""
+  $NIXOS_REBUILD switch --rollback
+  rc=$?
+  echo ""
+  [ $rc -eq 0 ] && cecho $GREEN "  ✓ rollback done" || cecho $RED "  ✗ rollback failed"
+  read -rp "  press enter to continue..."
+}
+
+list_gens() {
+  cecho $CYAN "  → generations:"
+  echo ""
+  $NIXOS_REBUILD list-generations
+  echo ""
+  read -rp "  press enter to continue..."
+}
+
+while true; do
+  header
+  menu
+  case "$choice" in
+    1) run_rebuild "switch" ;;
+    2) run_rebuild "boot" ;;
+    3) run_rebuild "test" ;;
+    4) run_rebuild "dry-activate" ;;
+    5) run_rebuild "build" ;;
+    6) rollback ;;
+    7) list_gens ;;
+    0) echo ""; exit 0 ;;
+    *) cecho $RED "  invalid choice"; sleep 1 ;;
+  esac
+done

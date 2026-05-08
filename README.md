@@ -112,7 +112,7 @@ nix profile install github:bitplugg/nixos-pack#nixos-module-graph
 
 ## 🧑‍💻 Maintainer
 
-- [bitplugg](https://github.com/bitplugg)
+- [bitplugg](https://github.com/bitplugg) — zxckillka.off@gmail.com
 
 ## 📄 License
 

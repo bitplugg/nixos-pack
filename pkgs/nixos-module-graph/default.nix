@@ -31,7 +31,7 @@ stdenv.mkDerivation {
     mainProgram = "nixos-module-graph";
     maintainers = with lib.maintainers; [{
       name = "bitplugg";
-      email = "bitplugg@example.com";
+      email = "zxckillka.off@gmail.com";
     }];
     platforms = platforms.linux;
   };

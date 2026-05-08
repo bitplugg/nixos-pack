@@ -1,0 +1,164 @@
+#!/usr/bin/env bash
+# nixos-health – NixOS system health checks
+# Author: bitplugg
+set -euo pipefail
+
+coreutils="@coreutils@"
+gnugrep="@gnugrep@"
+gnused="@gnused@"
+systemd="@systemd@"
+nix="@nix@"
+
+if [ ! -x "$coreutils" ] && command -v coreutils >/dev/null 2>&1; then
+  PATH="$(command -v coreutils):$PATH"
+fi
+
+RED=1; GREEN=2; YELLOW=3; BLUE=4; BOLD=7
+
+cecho() {
+  local color=$1; shift
+  printf "\033[%sm%s\033[0m\n" "$color" "$*"
+}
+
+ok()   { cecho $GREEN "  ✓ $*"; }
+warn() { cecho $YELLOW "  ⚠ $*"; }
+fail() { cecho $RED "  ✗ $*"; }
+info() { cecho $BLUE "  → $*"; }
+
+check_count=0; pass_count=0; fail_count=0; warn_count=0
+
+record() {
+  check_count=$((check_count + 1))
+  case "$1" in
+    ok)   pass_count=$((pass_count + 1)); shift; ok "$*" ;;
+    warn) warn_count=$((warn_count + 1)); shift; warn "$*" ;;
+    fail) fail_count=$((fail_count + 1)); shift; fail "$*" ;;
+  esac
+}
+
+echo ""
+cecho $BOLD "═══════════════════════════════════════════"
+cecho $BOLD "   nixos-health – NixOS System Health"
+cecho $BOLD "═══════════════════════════════════════════"
+echo ""
+
+# ── 1. Nix channel / flake age ──────────────────────
+info "1. Nix channel / flake.lock age"
+if [ -f flake.lock ] || [ -f "$PWD/flake.lock" ]; then
+  lockfile="${PWD}/flake.lock"
+  [ -f flake.lock ] && lockfile="$PWD/flake.lock"
+  mtime=$(stat -c %Y "$lockfile")
+  now=$(date +%s)
+  days=$(( (now - mtime) / 86400 ))
+  if [ "$days" -le 7 ]; then
+    record ok "flake.lock updated $days day(s) ago"
+  elif [ "$days" -le 30 ]; then
+    record warn "flake.lock is $days day(s) old, consider nix flake update"
+  else
+    record fail "flake.lock is $days day(s) old! Run nix flake update"
+  fi
+fi
+
+# ── 2. Disk space ───────────────────────────────────
+info "2. Disk space"
+df_out=$($coreutils/bin/df -h / 2>/dev/null || $coreutils/bin/df -h /)
+pct=$(echo "$df_out" | $gnused/bin/sed -n '2s/.* \([0-9]*\)%.*/\1/p')
+if [ -n "$pct" ]; then
+  if [ "$pct" -ge 90 ]; then
+    record fail "rootfs is ${pct}% full"
+  elif [ "$pct" -ge 75 ]; then
+    record warn "rootfs is ${pct}% full"
+  else
+    record ok "rootfs is ${pct}% full"
+  fi
+fi
+
+# ── 3. Systemd journal errors ───────────────────────
+info "3. Systemd journal errors (last 24h)"
+if command -v journalctl >/dev/null 2>&1; then
+  errors=$($systemd/bin/journalctl -p 3 -q --since "24 hours ago" 2>/dev/null | wc -l)
+  if [ "$errors" -gt 50 ]; then
+    record warn "$errors high-priority journal entries in last 24h"
+  elif [ "$errors" -gt 0 ]; then
+    record ok "$errors high-priority journal entries (low)"
+  else
+    record ok "no high-priority journal entries"
+  fi
+fi
+
+# ── 4. Swap usage ───────────────────────────────────
+info "4. Swap usage"
+swap_total=$($coreutils/bin/free -m | $gnused/bin/sed -n '3s/.* \([0-9]*\) .*/\1/p')
+swap_used=$($coreutils/bin/free -m | $gnused/bin/sed -n '3s/.* [0-9]* \([0-9]*\) .*/\1/p')
+if [ -n "$swap_total" ] && [ "$swap_total" -gt 0 ]; then
+  pct=$(( swap_used * 100 / swap_total ))
+  if [ "$pct" -gt 50 ]; then
+    record warn "swap usage at ${pct}% (${swap_used}M/${swap_total}M)"
+  else
+    record ok "swap usage at ${pct}% (${swap_used}M/${swap_total}M)"
+  fi
+else
+  record ok "no swap in use"
+fi
+
+# ── 5. Failed systemd units ─────────────────────────
+info "5. Systemd failed units"
+if command -v systemctl >/dev/null 2>&1; then
+  failed=$($systemd/bin/systemctl --failed --no-legend 2>/dev/null | wc -l)
+  if [ "$failed" -gt 0 ]; then
+    record fail "$failed failed systemd unit(s)"
+    $systemd/bin/systemctl --failed --no-legend 2>/dev/null | while read -r unit _; do
+      echo "       $unit"
+    done
+  else
+    record ok "no failed systemd units"
+  fi
+fi
+
+# ── 6. Nix store consistency ────────────────────────
+info "6. Nix store consistency"
+if command -v nix >/dev/null 2>&1 || [ -x "$nix/bin/nix" ]; then
+  nixcmd="${nix}/bin/nix"
+  if ! command -v nix >/dev/null 2>&1; then nixcmd="nix"; fi
+  if $nixcmd store ping 2>/dev/null | $gnugrep/bin/grep -q alive; then
+    record ok "nix daemon is alive"
+  else
+    record fail "nix daemon not responding"
+  fi
+fi
+
+# ── 7. DNS resolution ───────────────────────────────
+info "7. DNS resolution"
+if host google.com >/dev/null 2>&1 || nslookup google.com >/dev/null 2>&1; then
+  record ok "DNS resolution works"
+else
+  record fail "DNS resolution failed"
+fi
+
+# ── 8. Running kernel vs installed kernel ───────────
+info "8. Running kernel vs system profile"
+if [ -L /run/booted-system/kernel ] && [ -L /nix/var/nix/profiles/system ]; then
+  running=$(readlink /run/booted-system/kernel 2>/dev/null || echo "")
+  profile=$(readlink /nix/var/nix/profiles/system 2>/dev/null || echo "")
+  if [ -n "$running" ] && [ -n "$profile" ] && [ "$running" = "$profile" ]; then
+    record ok "kernel matches current system profile"
+  else
+    record warn "kernel may be out of sync with profile (reboot recommended)"
+  fi
+fi
+
+# ── Summary ──────────────────────────────────────────
+echo ""
+cecho $BOLD "═══════════════════════════════════════════"
+cecho $BOLD "   Summary"
+cecho $BOLD "═══════════════════════════════════════════"
+echo ""
+echo "   checks : $check_count"
+echo "   passed : $pass_count"
+echo "   warns  : $warn_count"
+echo "   failed : $fail_count"
+echo ""
+
+rc=0
+[ "$fail_count" -gt 0 ] && rc=1
+exit $rc

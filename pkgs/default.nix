@@ -11,4 +11,8 @@
   brrfetch = pkgs.callPackage ./brrfetch { };
   rkn-block-checker = pkgs.callPackage ./rkn-block-checker { };
   nixos-module-graph = pkgs.callPackage ./nixos-module-graph { };
+  nixos-health = pkgs.callPackage ./nixos-health { };
+  nix-diff-lock = pkgs.callPackage ./nix-diff-lock { };
+  nixos-build-tui = pkgs.callPackage ./nixos-build-tui { };
+  system-report = pkgs.callPackage ./system-report { };
 }

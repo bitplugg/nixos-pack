@@ -1,0 +1,157 @@
+#!/usr/bin/env python3
+"""nix-diff-lock — diff two flake.lock files in human-readable format.
+
+Author: bitplugg
+"""
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+from datetime import datetime
+
+
+def load_lock(path):
+    with open(path) as f:
+        return json.load(f)
+
+
+def short_rev(rev):
+    return rev[:7] if rev and len(rev) > 7 else rev or "?"
+
+
+def days_ago(timestamp):
+    if timestamp == 0:
+        return "?"
+    delta = datetime.now() - datetime.fromtimestamp(timestamp)
+    d = delta.days
+    if d == 0:
+        return "today"
+    if d == 1:
+        return "yesterday"
+    return f"{d} days ago"
+
+
+def get_commit_date(repo, rev):
+    try:
+        r = subprocess.run(
+            ["git", "log", "-1", "--format=%ct", rev],
+            capture_output=True, text=True, timeout=5,
+            cwd=repo,
+        )
+        if r.returncode == 0 and r.stdout.strip():
+            return int(r.stdout.strip())
+    except Exception:
+        pass
+    return 0
+
+
+def diff_locks(old, new):
+    old_nodes = old.get("nodes", {})
+    new_nodes = new.get("nodes", {})
+
+    all_keys = sorted(set(list(old_nodes.keys()) + list(new_nodes.keys())))
+
+    added = []
+    removed = []
+    changed = []
+    unchanged = []
+
+    for key in all_keys:
+        if key == "root":
+            continue
+        old_n = old_nodes.get(key)
+        new_n = new_nodes.get(key)
+
+        if old_n and not new_n:
+            removed.append(key)
+        elif not old_n and new_n:
+            added.append(key)
+        elif old_n and new_n:
+            old_locked = old_n.get("locked", {})
+            new_locked = new_n.get("locked", {})
+            if old_locked.get("rev") != new_locked.get("rev"):
+                changed.append((key, old_locked, new_locked))
+            else:
+                unchanged.append(key)
+
+    return added, removed, changed, unchanged
+
+
+def format_diff(old_file, new_file):
+    old = load_lock(old_file)
+    new = load_lock(new_file)
+
+    added, removed, changed, unchanged = diff_locks(old, new)
+
+    print(f"\n  nix-diff-lock — flake.lock diff")
+    print(f"  ─────────────────────────────────────")
+    print(f"  old: {old_file}")
+    print(f"  new: {new_file}")
+    print("")
+
+    if not any([added, removed, changed]):
+        print("  ✓ no changes")
+        return 0
+
+    if added:
+        print(f"  [+] new inputs ({len(added)}):")
+        for name in added:
+            n = new["nodes"][name]
+            locked = n.get("locked", {})
+            rev = short_rev(locked.get("rev", ""))
+            print(f"      {name:30s} → {rev} ({locked.get('type','?')})")
+        print("")
+
+    if removed:
+        print(f"  [-] removed inputs ({len(removed)}):")
+        for name in removed:
+            print(f"      {name}")
+        print("")
+
+    if changed:
+        print(f"  [~] changed inputs ({len(changed)}):")
+        for name, old_locked, new_locked in changed:
+            old_rev = short_rev(old_locked.get("rev", ""))
+            new_rev = short_rev(new_locked.get("rev", ""))
+            old_url = old_locked.get("url", old_locked.get("owner", "") + "/" + old_locked.get("repo", ""))
+            print(f"      {name}")
+            print(f"          {old_rev} → {new_rev}  ({old_url})")
+        print("")
+
+    return 1 if changed else 0
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Human-readable diff for flake.lock files",
+    )
+    parser.add_argument("--old", "-o", required=True, help="old flake.lock")
+    parser.add_argument("--new", "-n", required=True, help="new flake.lock")
+    parser.add_argument("--json", action="store_true", help="output as JSON")
+    args = parser.parse_args()
+
+    if not os.path.exists(args.old):
+        print(f"error: {args.old} not found", file=sys.stderr)
+        sys.exit(1)
+    if not os.path.exists(args.new):
+        print(f"error: {args.new} not found", file=sys.stderr)
+        sys.exit(1)
+
+    if args.json:
+        old = load_lock(args.old)
+        new = load_lock(args.new)
+        a, r, c, u = diff_locks(old, new)
+        print(json.dumps({
+            "added": a,
+            "removed": r,
+            "changed": [{"name": n, "oldRev": ol.get("rev"), "newRev": nl.get("rev")} for n, ol, nl in c],
+        }, indent=2))
+    else:
+        rc = format_diff(args.old, args.new)
+        sys.exit(rc)
+
+
+if __name__ == "__main__":
+    main()

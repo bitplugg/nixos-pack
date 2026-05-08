@@ -1,0 +1,189 @@
+#!/usr/bin/env python3
+"""system-report — JSON inventory of a NixOS system.
+
+Author: bitplugg
+"""
+
+import json
+import os
+import platform
+import shutil
+import subprocess
+import sys
+from datetime import datetime
+
+
+def run(cmd, timeout=10):
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        return r.stdout.strip() if r.returncode == 0 else None
+    except Exception:
+        return None
+
+
+def get_os():
+    os_info = platform.uname()
+    return {
+        "hostname": os_info.node,
+        "system": os_info.system,
+        "kernel": os_info.release,
+        "architecture": os_info.machine,
+        "nixosVersion": run(["nixos-version"]) if shutil.which("nixos-version") else None,
+    }
+
+
+def get_cpu():
+    info = {}
+    with open("/proc/cpuinfo") as f:
+        for line in f:
+            if ":" in line:
+                k, v = line.split(":", 1)
+                k = k.strip().lower().replace(" ", "_")
+                v = v.strip()
+                if k == "model_name":
+                    info["model"] = v
+                elif k == "cpu_cores":
+                    info["cores"] = int(v)
+                elif k == "siblings":
+                    info["threads"] = int(v)
+    # alternative for core count
+    if "cores" not in info:
+        n = os.cpu_count()
+        info["cores"] = n
+        info["threads"] = n
+    return info
+
+
+def get_memory():
+    try:
+        with open("/proc/meminfo") as f:
+            mem = {}
+            for line in f:
+                if ":" in line:
+                    k, v = line.split(":", 1)
+                    v = v.strip().split()[0]
+                    mem[k.lower().replace(" ", "_")] = int(v)
+        return {
+            "total_kb": mem.get("memtotal", 0),
+            "available_kb": mem.get("memavailable", 0),
+            "swap_total_kb": mem.get("swaptotal", 0),
+            "swap_free_kb": mem.get("swapfree", 0),
+        }
+    except Exception:
+        return {}
+
+
+def get_disks():
+    disks = []
+    try:
+        r = subprocess.run(
+            ["df", "-h", "--type=ext4", "--type=btrfs", "--type=xfs", "--type=zfs"],
+            capture_output=True, text=True, timeout=5,
+        )
+        for line in r.stdout.strip().split("\n")[1:]:
+            parts = line.split()
+            if len(parts) >= 6:
+                disks.append({
+                    "filesystem": parts[0],
+                    "size": parts[1],
+                    "used": parts[2],
+                    "avail": parts[3],
+                    "use_pct": parts[4],
+                    "mount": parts[5],
+                })
+    except Exception:
+        pass
+    return disks
+
+
+def get_services():
+    services = []
+    try:
+        r = subprocess.run(
+            ["systemctl", "list-units", "--type=service", "--state=running", "--no-legend"],
+            capture_output=True, text=True, timeout=10,
+        )
+        for line in r.stdout.strip().split("\n"):
+            parts = line.split()
+            if parts:
+                services.append(parts[0])
+    except Exception:
+        pass
+    return sorted(services)
+
+
+def get_ports():
+    ports = []
+    try:
+        r = subprocess.run(
+            ["ss", "-tlnp4"], capture_output=True, text=True, timeout=5,
+        )
+        for line in r.stdout.strip().split("\n")[1:]:
+            parts = line.split()
+            if len(parts) >= 4:
+                addr_port = parts[3]
+                proc = parts[-1] if len(parts) > 4 else ""
+                if ":" in addr_port:
+                    port = addr_port.rsplit(":", 1)[-1]
+                    ports.append({"port": port, "address": addr_port, "process": proc.strip("()")})
+    except Exception:
+        pass
+    return ports
+
+
+def get_packages():
+    pkgs = []
+    if shutil.which("nix-env"):
+        r = run(["nix-env", "-q", "--json"], timeout=15)
+        if r:
+            try:
+                env_pkgs = json.loads(r)
+                pkgs = sorted(env_pkgs.keys())
+            except json.JSONDecodeError:
+                pass
+    if not pkgs and shutil.which("nix"):
+        r = run(["nix", "profile", "list", "--json"], timeout=15)
+        if r:
+            try:
+                profile = json.loads(r)
+                pkgs = [e.get("name", e.get("title", "?")) for e in profile]
+            except (json.JSONDecodeError, TypeError):
+                pass
+    return pkgs
+
+
+def get_env():
+    return {
+        "path": os.environ.get("PATH", "").split(":"),
+        "user": os.environ.get("USER", ""),
+        "shell": os.environ.get("SHELL", ""),
+        "term": os.environ.get("TERM", ""),
+        "nixPath": run(["printenv", "NIX_PATH"]),
+    }
+
+
+def main():
+    report = {
+        "report": {
+            "tool": "system-report",
+            "author": "bitplugg",
+            "timestamp": datetime.now().isoformat(),
+        },
+        "os": get_os(),
+        "cpu": get_cpu(),
+        "memory": get_memory(),
+        "disks": get_disks(),
+        "services": get_services(),
+        "openPorts": get_ports(),
+        "packages": get_packages(),
+        "environment": get_env(),
+    }
+
+    if "--pretty" in sys.argv[1:]:
+        print(json.dumps(report, indent=2))
+    else:
+        print(json.dumps(report))
+
+
+if __name__ == "__main__":
+    main()
