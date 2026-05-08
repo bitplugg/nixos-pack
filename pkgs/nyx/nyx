@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 import os
 import shutil
+import stat
 import subprocess
 import sys
 
 VERSION = "0.1.0"
-AUTHOR = "bitplugg <zxckillka.off@gmail.com>"
 
 BOLD = "\033[1m"
 DIM = "\033[2m"
@@ -31,40 +31,55 @@ BUILTIN = {
 }
 
 ALIASES = {
-    "h": "health",
-    "g": "graph",
-    "b": "build",
-    "dl": "diff-lock",
-    "r": "report",
-    "u": "update",
-    "sd": "switch-diff",
-    "c": "clean",
-    "l": "log",
-    "t": "top",
+    "h": "health", "g": "graph", "b": "build",
+    "dl": "diff-lock", "r": "report", "u": "update",
+    "sd": "switch-diff", "c": "clean", "l": "log", "t": "top",
 }
 
-SUBCOMMANDS = {}
-for alias, cmd in BUILTIN.items():
-    SUBCOMMANDS[alias] = ("builtin", cmd)
-for alias, target in ALIASES.items():
-    SUBCOMMANDS[alias] = ("alias", target)
+PLUGIN_DIRS = [
+    os.path.expanduser("~/.config/nyx/plugins"),
+    "/etc/nyx/plugins",
+]
 
 
-def find_external_plugins():
-    """Discover nyx-* commands in PATH."""
-    path = os.environ.get("PATH", "")
+def find_plugins():
     plugins = {}
-    for d in path.split(":"):
+    for d in PLUGIN_DIRS:
         if not os.path.isdir(d):
             continue
         try:
-            for f in os.listdir(d):
-                if f.startswith("nyx-") and os.access(os.path.join(d, f), os.X_OK):
-                    name = f[4:]
-                    plugins[name] = os.path.join(d, f)
+            for f in sorted(os.listdir(d)):
+                if not f.endswith(".nyx"):
+                    continue
+                path = os.path.join(d, f)
+                name = f[:-4]
+                meta = read_plugin_meta(path)
+                plugins[name] = {"path": path, "meta": meta}
         except PermissionError:
             continue
     return plugins
+
+
+def read_plugin_meta(path):
+    meta = {"description": "", "version": "", "author": ""}
+    try:
+        with open(path, encoding="utf-8", errors="replace") as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("# name:"):
+                    pass
+                elif line.startswith("# description:"):
+                    meta["description"] = line[len("# description:"):].strip()
+                elif line.startswith("# version:"):
+                    meta["version"] = line[len("# version:"):].strip()
+                elif line.startswith("# author:"):
+                    meta["author"] = line[len("# author:"):].strip()
+                elif meta["description"] or meta["version"] or meta["author"]:
+                    if not line.startswith("#"):
+                        break
+    except Exception:
+        pass
+    return meta
 
 
 def show_help(plugins):
@@ -73,34 +88,42 @@ def show_help(plugins):
     print(f"  {DIM}usage:{RESET} nyx <command> [args...]")
     print()
 
-    all_cmds = sorted(set(list(SUBCOMMANDS.keys()) + list(plugins.keys())))
+    cmds = {}
+    for name in BUILTIN:
+        cmds[name] = ("builtin", BUILTIN[name])
+    for name, info in plugins.items():
+        cmds[name] = ("plugin", info)
 
     print(f"  {BOLD}commands{RESET}")
-    for name in all_cmds:
-        if name in ALIASES:
-            continue
-        info = SUBCOMMANDS.get(name)
+    for name in sorted(cmds):
+        kind, info = cmds[name]
         alias_str = ""
         for a, t in sorted(ALIASES.items()):
             if t == name:
                 alias_str += f" {DIM}({a}){RESET}"
-        if info:
-            print(f"    {GREEN}{name}{RESET}{alias_str}")
-        elif name in plugins:
-            plugin = plugins[name]
-            desc = ""
-            print(f"    {YELLOW}{name}{RESET}  {DIM}[plugin]{RESET}")
+        if kind == "builtin":
+            desc = f"  {DIM}→ {info}{RESET}"
+            print(f"    {GREEN}{name}{RESET}{alias_str}{desc}")
         else:
-            print(f"    {name}")
+            d = info["meta"]["description"]
+            desc = f"  {DIM}{d}{RESET}" if d else ""
+            print(f"    {YELLOW}{name}{RESET}{alias_str}{desc}")
 
     print()
-    print(f"  {DIM}plugins:{RESET} {len(plugins)} external")
+    print(f"  {DIM}plugins:{RESET} {len(plugins)} loaded")
     print(f"  {DIM}nyx --help{RESET}  show this")
     print()
 
 
+def run_nyx_file(path, args):
+    if not os.access(path, os.X_OK):
+        st = os.stat(path)
+        os.chmod(path, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    os.execve(path, [path] + args, os.environ)
+
+
 def main():
-    plugins = find_external_plugins()
+    plugins = find_plugins()
 
     if len(sys.argv) < 2:
         show_help(plugins)
@@ -112,33 +135,27 @@ def main():
     if cmd in ("--help", "-h", "help"):
         show_help(plugins)
         return
-
     if cmd in ("--version", "-v"):
         print(f"nyx {VERSION}")
         return
 
-    info = SUBCOMMANDS.get(cmd)
-    if info:
-        kind, target = info
-        if kind == "alias":
-            target = BUILTIN.get(target, target)
-            target_cmd = shutil.which(target)
-            if not target_cmd:
-                print(f"{RED}error:{RESET} '{target}' not found — install the corresponding package")
-                sys.exit(1)
-            os.execvp(target_cmd, [target_cmd] + args)
-        elif kind == "builtin":
-            target_cmd = shutil.which(target)
-            if not target_cmd:
-                print(f"{RED}error:{RESET} '{target}' not found — install nixos-pack overlay or the package")
-                sys.exit(1)
-            os.execvp(target_cmd, [target_cmd] + args)
-    elif cmd in plugins:
-        os.execvp(plugins[cmd], [plugins[cmd]] + args)
-    else:
-        print(f"{RED}unknown command:{RESET} {cmd}")
-        print(f"  {DIM}run 'nyx --help' for available commands{RESET}")
-        sys.exit(1)
+    if cmd in ALIASES:
+        cmd = ALIASES[cmd]
+
+    if cmd in BUILTIN:
+        target = BUILTIN[cmd]
+        target_cmd = shutil.which(target)
+        if not target_cmd:
+            print(f"{RED}error:{RESET} '{target}' not found — install the package or add it to PATH")
+            sys.exit(1)
+        os.execvp(target_cmd, [target_cmd] + args)
+
+    if cmd in plugins:
+        run_nyx_file(plugins[cmd]["path"], args)
+
+    print(f"{RED}unknown command:{RESET} {cmd}")
+    print(f"  {DIM}run 'nyx --help' for available commands{RESET}")
+    sys.exit(1)
 
 
 if __name__ == "__main__":

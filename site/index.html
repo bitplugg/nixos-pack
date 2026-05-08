@@ -1,9 +1,51 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <meta charset="utf-8">
-<meta http-equiv="refresh" content="0;url=en/nyx/">
-<title>nixos-pack</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title id="title">nixos-pack</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>❄️</text></svg>">
-<body>
-<a href="en/nyx/">nixos-pack docs</a>
+<style>
+:root { --bg: #000; --fg: #e8eaed; --dim: #9aa0a6; --accent: #8ab4f8; --border: #1f1f1f; --sidebar-bg: #0a0a0a; --card-bg: #111; --hover-bg: #1a1a1a; --active-bg: #0d1b2a; --sidebar-w: 260px; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Noto Sans,Helvetica,Arial,sans-serif; background: var(--bg); color: var(--fg); line-height: 1.7; display: flex; min-height: 100vh; }
+#sidebar { width: var(--sidebar-w); background: var(--sidebar-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; overflow-y: auto; }
+.sidebar-header { padding: 1.1rem 1.25rem; border-bottom: 1px solid var(--border); font-size: 1.15rem; font-weight: 700; color: var(--accent); letter-spacing: -.01em; }
+#sidebar nav { flex: 1; padding: .4rem 0; }
+#sidebar ol { list-style: none; }
+#sidebar li a { display: block; padding: .45rem 1.25rem; color: var(--dim); text-decoration: none; font-size: .88rem; transition: .1s; border-left: 2px solid transparent; cursor: pointer; }
+#sidebar li a:hover { color: var(--fg); background: var(--hover-bg); }
+#sidebar li.active a { color: var(--fg); background: var(--active-bg); border-left-color: var(--accent); font-weight: 500; }
+.sidebar-bottom { padding: .75rem 1.25rem; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: .5rem; font-size: .82rem; }
+.sidebar-bottom a { color: var(--dim); text-decoration: none; cursor: pointer; }
+.sidebar-bottom a:hover { color: var(--accent); }
+.lang-switch { margin-left: auto; padding: .15rem .55rem; border: 1px solid var(--border); border-radius: 4px; font-weight: 600; font-size: .72rem; color: var(--dim) !important; }
+.lang-switch:hover { border-color: var(--accent); color: var(--accent) !important; }
+#content { margin-left: var(--sidebar-w); padding: 2.5rem 3rem; max-width: 860px; flex: 1; }
+h1 { font-size: 1.85rem; font-weight: 700; margin-bottom: .2rem; letter-spacing: -.02em; }
+a { color: var(--accent); }
+pre { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: .85rem 1.1rem; overflow-x: auto; font-size: .85rem; margin: .6rem 0; }
+code { background: var(--card-bg); border-radius: 4px; padding: .1rem .35rem; font-size: .85em; }
+pre code { background: none; padding: 0; }
+table { width: 100%; border-collapse: collapse; margin: .6rem 0; font-size: .9rem; }
+th, td { text-align: left; padding: .45rem .75rem; border-bottom: 1px solid var(--border); }
+th { color: var(--dim); font-weight: 600; font-size: .82rem; text-transform: uppercase; letter-spacing: .03em; }
+ul, ol { margin: .5rem 0; padding-left: 1.5rem; }
+li { color: var(--dim); }
+h2 { margin-top: 1.8rem; margin-bottom: .6rem; font-size: 1.2rem; font-weight: 600; }
+p { margin: .5rem 0; }
+.footer { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--dim); font-size: .85rem; }
+@media (max-width: 700px) { #sidebar { width: 100%; position: relative; } #content { margin-left: 0; padding: 1.5rem; } }
+</style>
+<div id="sidebar"></div>
+<div id="content">
+  <h1 id="article-title"></h1>
+  <div id="article-body"></div>
+  <div class="footer"><a href="https://github.com/bitplugg/nixos-pack">GitHub</a> · MIT</div>
+</div>
+<script src="data.js"></script>
+<script>
+fromHash();
+render();
+window.addEventListener("hashchange", function() { fromHash(); render(); });
+</script>
 </html>
