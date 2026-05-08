@@ -120,32 +120,59 @@ Multi-layer diagnostics tool for internet censorship (RKN/TSPU blocks). Tests co
 
 ## 🚀 Usage as a dependency
 
+### NixOS module (recommended)
+
+Import a package as a NixOS module — it will be added to `environment.systemPackages` automatically:
+
 ```nix
 {
   inputs.nixos-pack.url = "github:bitplugg/nixos-pack";
 
   outputs = { self, nixpkgs, nixos-pack, ... }: {
     nixosConfigurations.my-machine = nixpkgs.lib.nixosSystem {
-      modules = [{
-        environment.systemPackages = with nixos-pack.packages.${system}; [
-          nixos-module-graph
-          nixos-health
-          nixos-build-tui
-          nix-diff-lock
-          system-report
-          brrtfetch
-          rkn-block-checker
-        ];
-      }];
+      modules = [
+        nixos-pack.nixosModules.nixos-health
+        nixos-pack.nixosModules.nixos-module-graph
+        nixos-pack.nixosModules.system-report
+      ];
     };
   };
 }
 ```
 
-### Overlay
+### Home-Manager module
 
 ```nix
-import nixos-pack.overlays.default  # adds all packages to pkgs
+{
+  imports = [ nixos-pack.homeManagerModules.nix-diff-lock ];
+  # or in home-manager's extraSpecialArgs:
+  home-manager.users.myuser = { pkgs, ... }: {
+    imports = [ inputs.nixos-pack.homeManagerModules.brrtfetch ];
+  };
+}
+```
+
+### Manual package + overlay
+
+```nix
+{
+  inputs.nixos-pack.url = "github:bitplugg/nixos-pack";
+
+  outputs = { self, nixpkgs, nixos-pack, ... }: {
+    nixosConfigurations.my-machine = nixpkgs.lib.nixosSystem {
+      modules = [
+        nixos-pack.overlays.default  # adds all packages to pkgs
+        {
+          environment.systemPackages = with pkgs; [
+            nixos-health
+            nixos-module-graph
+            system-report
+          ];
+        }
+      ];
+    };
+  };
+}
 ```
 
 ### nix profile
