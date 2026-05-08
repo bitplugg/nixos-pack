@@ -8,19 +8,28 @@ let
   nixpkgs = import <nixpkgs> {};
   lib = nixpkgs.lib;
 
+  maxDepth' = if builtins.isString maxDepth then builtins.fromJSON maxDepth else maxDepth;
+
   moduleArgs = {
     inherit lib;
     config = {};
     options = {};
     pkgs = nixpkgs;
     modulesPath = "${toString nixpkgs.path}/nixos/modules";
+    inputs = {};
+    self = {};
+    host = "";
+    username = "";
   };
 
   resolve = m:
-    if builtins.isFunction m then m moduleArgs else m;
+    if builtins.isFunction m then
+      let r = builtins.tryEval (m moduleArgs);
+      in if r.success then r.value else {}
+    else m;
 
   walk = path: visited: depth:
-    if depth > maxDepth then
+    if depth > maxDepth' then
       { file = path; options = []; imports = []; cycle = false; error = "max-depth"; }
     else
       let
@@ -32,7 +41,8 @@ let
           { file = modFile; options = []; imports = []; cycle = true; error = null; }
         else
           let
-            impList = mod.imports or [];
+            rawImports = builtins.tryEval (mod.imports or []);
+            impList = if rawImports.success then rawImports.value else [];
             newVisited = [modFile] ++ visited;
             processed = builtins.filter (x: x != null) (
               builtins.map (imp: walkImport imp newVisited (depth + 1)) impList
@@ -59,7 +69,8 @@ let
           { file = modFile; options = []; imports = []; cycle = true; error = null; }
         else
           let
-            impList = mod.imports or [];
+            rawImports = builtins.tryEval (mod.imports or []);
+            impList = if rawImports.success then rawImports.value else [];
             processed = builtins.filter (x: x != null) (
               builtins.map (imp: walkImport imp ([modFile] ++ visited) depth) impList
             );
@@ -75,8 +86,10 @@ let
   rootRaw = import configFile;
   rootMod = resolve rootRaw;
   rootFile = if rootMod ? _file then rootMod._file else configFile;
+  rawRootImports = builtins.tryEval (rootMod.imports or []);
+  rootImportList = if rawRootImports.success then rawRootImports.value else [];
   rootImports = builtins.filter (x: x != null) (
-    builtins.map (imp: walkImport imp [rootFile] 0) (rootMod.imports or [])
+    builtins.map (imp: walkImport imp [rootFile] 0) rootImportList
   );
 in
   {
