@@ -20,6 +20,11 @@ nix run github:bitplugg/nixos-pack#nix-diff-lock -- before.lock after.lock
 | **nixos-build-tui** | Minimal TUI wrapper around nixos-rebuild |
 | **nix-diff-lock** | Human-readable diff for flake.lock files |
 | **system-report** | JSON system inventory: packages, services, ports, mounts |
+| **nixos-flake-update** | TUI for selectively updating flake inputs |
+| **nixos-switch-diff** | Show package diff between current and candidate system |
+| **nixos-clean** | Nix store GC TUI with generation overview |
+| **nixos-log** | Journalctl browser with colored error/warning highlighting |
+| **nixos-top** | Real-time system monitor: CPU, memory, systemd units |
 | **brrtfetch** | Render animated ASCII art from a GIF for your sysinfo fetcher |
 | **rkn-block-checker** | Diagnose RKN/TSPU internet blocks layer by layer |
 
@@ -110,6 +115,51 @@ system-report
 system-report --output report.json
 ```
 
+## nixos-flake-update
+
+Interactive TUI that reads your `flake.nix` inputs, shows current locked revisions, and lets you pick which inputs to update.
+
+```bash
+nixos-flake-update
+```
+
+## nixos-switch-diff
+
+Builds a candidate system and diffs its store paths against the current generation — shows added, removed, or changed packages.
+
+```bash
+nixos-switch-diff
+```
+
+## nixos-clean
+
+Shows generation overview and nix store size, then runs garbage collection. Supports `--dry-run` and `--full` (historical) modes.
+
+```bash
+nixos-clean
+nixos-clean --dry-run
+nixos-clean --full
+```
+
+## nixos-log
+
+Wraps `journalctl` with syntax highlighting for errors (red), warnings (yellow), and service events (green).
+
+```bash
+nixos-log
+nixos-log -u nginx --follow
+nixos-log --boot -1 --priority err
+```
+
+## nixos-top
+
+Live-updating dashboard showing load averages, memory usage, top systemd units by CPU, and recent journal errors.
+
+```bash
+nixos-top
+nixos-top -n 5   # update every 5 seconds
+```
+
 ## brrtfetch
 
 Animated ASCII art fetcher. Give it a GIF, get back smooth ANSI animations for `neofetch` / `fastfetch` / whatever.
@@ -133,6 +183,11 @@ Import a package as a NixOS module — it will be added to `environment.systemPa
       modules = [
         nixos-pack.nixosModules.nixos-health
         nixos-pack.nixosModules.nixos-module-graph
+        nixos-pack.nixosModules.nixos-flake-update
+        nixos-pack.nixosModules.nixos-switch-diff
+        nixos-pack.nixosModules.nixos-clean
+        nixos-pack.nixosModules.nixos-log
+        nixos-pack.nixosModules.nixos-top
         nixos-pack.nixosModules.system-report
       ];
     };

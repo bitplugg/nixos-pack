@@ -15,4 +15,9 @@
   nix-diff-lock = pkgs.callPackage ./nix-diff-lock { };
   nixos-build-tui = pkgs.callPackage ./nixos-build-tui { };
   system-report = pkgs.callPackage ./system-report { };
+  nixos-flake-update = pkgs.callPackage ./nixos-flake-update { };
+  nixos-switch-diff = pkgs.callPackage ./nixos-switch-diff { };
+  nixos-clean = pkgs.callPackage ./nixos-clean { };
+  nixos-log = pkgs.callPackage ./nixos-log { };
+  nixos-top = pkgs.callPackage ./nixos-top { };
 }

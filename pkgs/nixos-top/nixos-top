@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BOLD="\033[1m"
+DIM="\033[2m"
+RED="\033[31m"
+GREEN="\033[32m"
+YELLOW="\033[33m"
+CYAN="\033[36m"
+BLUE="\033[34m"
+RESET="\033[0m"
+CLEAR="\033[2J\033[H"
+MOVE="\033[H"
+
+interval=2
+
+usage() {
+  echo -e "${BOLD}nixos-top${RESET} — system monitor\n"
+  echo -e "  ${DIM}usage:${RESET} nixos-top [-n <seconds>]"
+  exit 0
+}
+
+while getopts "n:h" opt; do
+  case "$opt" in
+    n) interval="$OPTARG" ;;
+    h|*) usage ;;
+  esac
+done
+
+trap "echo -e '\n${DIM}bye${RESET}'; exit 0" INT TERM
+
+while true; do
+  load=$(cat /proc/loadavg | cut -d' ' -f1-3)
+  mem_total=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+  mem_avail=$(grep MemAvailable /proc/meminfo | awk '{print $2}')
+  mem_pct=$(( (mem_total - mem_avail) * 100 / mem_total ))
+
+  echo -ne "${CLEAR}${BOLD}nixos-top${RESET}${DIM}  —  load: $load  │  mem: ${mem_pct}%${RESET}\n\n"
+
+  echo -e "${CYAN}  CPU / Memory${RESET}"
+  echo -e "    ${DIM}load:${RESET}  $load"
+  echo -e "    ${DIM}mem:${RESET}   $(( (mem_total - mem_avail) / 1024 ))M / $(( mem_total / 1024 ))M  (${mem_pct}%)"
+  echo ""
+
+  echo -e "${CYAN}  Top systemd units (by CPU)${RESET}"
+  systemd-cgtop --cpu --depth=2 -n 8 --iterations=1 2>/dev/null || echo -e "    ${DIM}(requires root)${RESET}"
+  echo ""
+
+  echo -e "${CYAN}  Recent journal errors${RESET}"
+  journalctl -p err -n 5 --no-hostname --no-pager -q 2>/dev/null \
+    | awk -v RED="$RED" -v DIM="$DIM" -v RESET="$RESET" '{ print RED $0 RESET }' \
+    || echo -e "    ${DIM}(no recent errors)${RESET}"
+
+  echo -e "\n  ${DIM}updating every ${interval}s — Ctrl+C to quit${RESET}"
+  sleep "$interval"
+done

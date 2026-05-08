@@ -1,0 +1,127 @@
+#!/usr/bin/env python3
+import json
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+CLEAR = "\033[2J\033[H"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+RED = "\033[31m"
+GREEN = "\033[32m"
+YELLOW = "\033[33m"
+BLUE = "\033[34m"
+CYAN = "\033[36m"
+RESET = "\033[0m"
+
+
+def find_flake_root():
+    d = Path.cwd()
+    while d != d.parent:
+        if (d / "flake.nix").exists():
+            return d
+        d = d.parent
+    return None
+
+
+def parse_inputs():
+    root = find_flake_root()
+    if not root:
+        print(f"{RED}no flake.nix found{RESET}", file=sys.stderr)
+        sys.exit(1)
+
+    content = (root / "flake.nix").read_text()
+    inputs = []
+    in_inputs = False
+    for line in content.splitlines():
+        if re.match(r'^\s*inputs\s*=', line):
+            in_inputs = True
+            continue
+        if in_inputs:
+            m = re.match(r'^\s+(\w+)\.url\s*=\s*"([^"]+)"', line)
+            if m:
+                inputs.append({"name": m.group(1), "url": m.group(2)})
+            if line.strip() == "};":
+                break
+    return root, inputs
+
+
+def get_current_lock(root):
+    lock_file = root / "flake.lock"
+    if not lock_file.exists():
+        return {}
+    data = json.loads(lock_file.read_text())
+    nodes = data.get("nodes", {})
+    info = {}
+    for name, node in nodes.items():
+        if name == "root":
+            continue
+        original = node.get("original", {})
+        locked = node.get("locked", {})
+        info[name] = {
+            "url": original.get("url", ""),
+            "rev": (locked.get("rev") or "")[:7],
+            "last": (locked.get("lastModified") or ""),
+        }
+    return info
+
+
+def run_nix_update(root, inputs, selected):
+    names = [inputs[i]["name"] for i in selected]
+    print(f"\n{BLUE}→ updating: {', '.join(names)}{RESET}\n")
+    env = os.environ.copy()
+    env["NIX_CONFIG"] = "experimental-features = nix-command flakes"
+    cmd = ["nix", "flake", "update"]
+    for n in names:
+        cmd.extend(["--update-input", n])
+    r = subprocess.run(cmd, cwd=root, env=env)
+    if r.returncode == 0:
+        print(f"\n{GREEN}✔ done{RESET}")
+    else:
+        print(f"\n{RED}✖ failed{RESET}")
+
+
+def main():
+    root, inputs = parse_inputs()
+    if not inputs:
+        print(f"{YELLOW}no inputs found in flake.nix{RESET}")
+        return
+
+    lock_info = get_current_lock(root)
+
+    while True:
+        print(f"{CLEAR}{BOLD}nixos-flake-update{RESET}  —  {DIM}{root}{RESET}\n")
+        print(f"  {DIM}┌──── inputs ──────────────────────{RESET}")
+        for i, inp in enumerate(inputs):
+            name = inp["name"]
+            rev = lock_info.get(name, {}).get("rev", "???")
+            last = lock_info.get(name, {}).get("last", "")
+            marker = f" ✓" if lock_info.get(name) else ""
+            rev_str = f"  {DIM}{rev}{RESET}" if rev != "???" else ""
+            date_str = f" {DIM}({last}){RESET}" if last else ""
+            print(f"  {i+1:>2}. {BOLD}{name}{RESET}{rev_str}{date_str}{marker}")
+        print(f"  {DIM}└──────────────────────────────────{RESET}")
+        print(f"\n  {DIM}a{RESET} — update all")
+        print(f"  {DIM}q{RESET} — quit")
+        try:
+            choice = input(f"\n  {CYAN}→{RESET} ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            break
+        if choice == "q":
+            break
+        if choice == "a":
+            run_nix_update(root, inputs, list(range(len(inputs))))
+            continue
+        try:
+            idx = int(choice) - 1
+            if 0 <= idx < len(inputs):
+                run_nix_update(root, inputs, [idx])
+        except ValueError:
+            pass
+
+
+if __name__ == "__main__":
+    main()

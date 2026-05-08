@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BOLD="\033[1m"
+DIM="\033[2m"
+RED="\033[31m"
+GREEN="\033[32m"
+YELLOW="\033[33m"
+CYAN="\033[36m"
+RESET="\033[0m"
+
+echo -e "${BOLD}nixos-switch-diff${RESET}${DIM} — dry run comparison${RESET}"
+echo ""
+
+start=$(date +%s)
+
+echo -e "${CYAN}→ building current system...${RESET}"
+current=$(nix eval --raw ".#nixosConfigurations.$(hostname).config.system.build.toplevel" 2>/dev/null || \
+         nixos-rebuild list-generations --json 2>/dev/null | python3 -c "import json,sys; gens=json.load(sys.stdin); print(gens[0]['path'])" 2>/dev/null) || {
+    echo -e "${RED}cannot determine current generation${RESET}" >&2
+    exit 1
+}
+echo -e "  ${DIM}current:${RESET} $current"
+
+echo -e "${CYAN}→ building candidate...${RESET}"
+candidate=$(nix build ".#nixosConfigurations.$(hostname).config.system.build.toplevel" --no-link --print-out-paths 2>/dev/null || \
+            nixos-rebuild build --fast 2>&1 | tail -1 | grep -o '/nix/store/[^-]*[^"]*') || {
+    echo -e "${RED}build failed${RESET}" >&2
+    exit 1
+}
+echo -e "  ${DIM}candidate:${RESET} $candidate"
+
+elapsed=$(( $(date +%s) - start ))
+echo ""
+
+echo -e "${BOLD}Package diff${RESET}${DIM} (added / removed / changed)${RESET}"
+diff --new-line-format='+ %L' --old-line-format='- %L' --unchanged-line-format='' \
+  <(nix-store -q --references "$current" | sort) \
+  <(nix-store -q --references "$candidate" | sort) \
+  | awk -v GREEN="$GREEN" -v RED="$RED" -v DIM="$DIM" -v RESET="$RESET" '
+    /^\+/ { count_plus++; print GREEN $0 RESET; next }
+    /^-/ { count_minus++; print RED $0 RESET; next }
+    END {
+      print ""
+      print DIM "added:   " RESET GREEN count_plus RESET
+      print DIM "removed: " RESET RED count_minus RESET
+    }
+  '
+
+echo ""
+echo -e "${DIM}build time: ${elapsed}s${RESET}"

@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BOLD="\033[1m"
+DIM="\033[2m"
+RED="\033[31m"
+GREEN="\033[32m"
+YELLOW="\033[33m"
+CYAN="\033[36m"
+BLUE="\033[34m"
+RESET="\033[0m"
+CLEAR="\033[2J\033[H"
+
+usage() {
+  echo -e "${BOLD}nixos-clean${RESET} — NixOS GC TUI\n"
+  echo -e "  ${DIM}usage:${RESET} nixos-clean [--dry-run]"
+  echo -e "  ${DIM}       nixos-clean --full${RESET}  (includes historical)"
+  exit 0
+}
+
+DRY=false
+FULL=false
+for arg in "$@"; do
+  case "$arg" in
+    --dry-run) DRY=true ;;
+    --full) FULL=true ;;
+    --help|-h) usage ;;
+  esac
+done
+
+store_before=$(du -sh /nix/store 2>/dev/null | cut -f1 || echo "?")
+
+echo -e "${CLEAR}${BOLD}nixos-clean${RESET}${DIM} — /nix/store: $store_before${RESET}\n"
+
+# Generations
+echo -e "${CYAN}Generations:${RESET}"
+nixos-rebuild list-generations --json 2>/dev/null | python3 -c "
+import json, sys
+gens = json.load(sys.stdin)
+for g in reversed(gens[-20:]):
+    name = g.get('description', g.get('name','?'))
+    date = g.get('date','').split('T')[0]
+    path = g.get('path','')
+    rev = path.split('-')[-1][:12] if '-' in path else ''
+    print(f'  {BOLD}{name:<20}{RESET} {DIM}{date}{RESET}  {DIM}{rev}{RESET}')
+" 2>/dev/null || echo -e "  ${DIM}no generation info${RESET}"
+
+echo ""
+
+# GC options
+if [ "$DRY" = true ]; then
+    echo -e "${BLUE}→ dry run:${RESET}"
+    nix store gc --print-dead 2>/dev/null | wc -l
+elif [ "$FULL" = true ]; then
+    echo -e "${YELLOW}→ full GC (all historical)...${RESET}"
+    nix-collect-garbage -d 2>&1 | tail -3
+else
+    echo -e "${GREEN}→ standard GC...${RESET}"
+    sudo nix-collect-garbage 2>&1 | tail -3
+fi
+
+store_after=$(du -sh /nix/store 2>/dev/null | cut -f1 || echo "?")
+echo -e "\n${DIM}store: $store_before → $store_after${RESET}"

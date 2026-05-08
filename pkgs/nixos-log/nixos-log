@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BOLD="\033[1m"
+DIM="\033[2m"
+RED="\033[31m"
+GREEN="\033[32m"
+YELLOW="\033[33m"
+CYAN="\033[36m"
+RESET="\033[0m"
+
+usage() {
+  echo -e "${BOLD}nixos-log${RESET} — journald browser\n"
+  echo -e "  ${DIM}usage:${RESET} nixos-log [options]"
+  echo -e "  ${DIM}       nixos-log -u nginx${RESET}"
+  echo -e "  ${DIM}       nixos-log -p 5 --follow${RESET}"
+  echo -e "  ${DIM}       nixos-log --boot -1 --priority err${RESET}"
+  echo ""
+  echo -e "  ${DIM}any flag is passed directly to journalctl${RESET}"
+  exit 0
+}
+
+if [ $# -eq 0 ]; then
+  exec journalctl --no-hostname -xe -n 60 --no-pager | \
+    awk -v BOLD="$BOLD" -v RED="$RED" -v YELLOW="$YELLOW" -v GREEN="$GREEN" -v DIM="$DIM" -v RESET="$RESET" '
+    {
+      color = DIM
+      if ($0 ~ /(error|fail|fatal|CRIT)/i) color = RED BOLD
+      else if ($0 ~ /(warn|WARNING)/i) color = YELLOW
+      else if ($0 ~ /(started|Started|activated)/) color = GREEN
+      print color $0 RESET
+    }'
+fi
+
+exec journalctl --no-hostname "$@"
