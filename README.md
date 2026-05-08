@@ -6,17 +6,22 @@ My personal **Nix flake** with a collection of custom packages — ready to use,
 
 ```bash
 nix run github:bitplugg/nixos-pack#brrtfetch
-nix run github:bitplugg/nixos-pack#rkn-block-checker
 nix run github:bitplugg/nixos-pack#nixos-module-graph -- --help
+nix run github:bitplugg/nixos-pack#nixos-health
+nix run github:bitplugg/nixos-pack#nix-diff-lock -- before.lock after.lock
 ```
 
 ## 📦 Packages
 
 | Package | Description |
 |---|---|
-| **brrtfetch** | Render animated ASCII art from a GIF for your sysinfo fetcher of choice |
-| **rkn-block-checker** | Diagnose RKN/TSPU internet blocks layer by layer |
 | **nixos-module-graph** | Analyse NixOS module import structure as a graph |
+| **nixos-health** | Quick system health checks — channel age, disk, journal, DNS |
+| **nixos-build-tui** | Minimal TUI wrapper around nixos-rebuild |
+| **nix-diff-lock** | Human-readable diff for flake.lock files |
+| **system-report** | JSON system inventory: packages, services, ports, mounts |
+| **brrtfetch** | Render animated ASCII art from a GIF for your sysinfo fetcher |
+| **rkn-block-checker** | Diagnose RKN/TSPU internet blocks layer by layer |
 
 ---
 
@@ -70,6 +75,41 @@ nixos-module-graph --config /etc/nixos/configuration.nix --option services.opens
 
 ---
 
+## nixos-health
+
+Quick health checks for a NixOS system — channel age, disk usage, journal errors, swap, DNS resolution, and more.
+
+```bash
+nixos-health
+nixos-health --check journal
+```
+
+## nixos-build-tui
+
+Minimal TUI wrapper around `nixos-rebuild`. Presents action selection, build log, rollback shortcut, and boot-entry management.
+
+```bash
+nixos-build-tui
+```
+
+## nix-diff-lock
+
+Compares two `flake.lock` files and shows what inputs changed, what commits came in, and how many packages were added/removed.
+
+```bash
+nix-diff-lock old.lock new.lock
+nix-diff-lock --json before.lock after.lock
+```
+
+## system-report
+
+Collects system information into a single JSON document: installed packages, enabled systemd units, open ports, filesystem mounts, kernel parameters, and hardware info.
+
+```bash
+system-report
+system-report --output report.json
+```
+
 ## brrtfetch
 
 Animated ASCII art fetcher. Give it a GIF, get back smooth ANSI animations for `neofetch` / `fastfetch` / whatever.
@@ -87,10 +127,14 @@ Multi-layer diagnostics tool for internet censorship (RKN/TSPU blocks). Tests co
   outputs = { self, nixpkgs, nixos-pack, ... }: {
     nixosConfigurations.my-machine = nixpkgs.lib.nixosSystem {
       modules = [{
-        environment.systemPackages = [
-          nixos-pack.packages.${system}.nixos-module-graph
-          nixos-pack.packages.${system}.brrtfetch
-          nixos-pack.packages.${system}.rkn-block-checker
+        environment.systemPackages = with nixos-pack.packages.${system}; [
+          nixos-module-graph
+          nixos-health
+          nixos-build-tui
+          nix-diff-lock
+          system-report
+          brrtfetch
+          rkn-block-checker
         ];
       }];
     };
