@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nixos-module-graph</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace; background: #0d1117; color: #c9d1d9; overflow: hidden; height: 100vh; }
+#graph { width: 100%; height: 100vh; }
+.links line { stroke: #30363d; stroke-opacity: 0.6; }
+.links line.cycle { stroke: #f85149; stroke-opacity: 0.8; stroke-dasharray: 4; }
+.nodes circle { stroke: #161b22; stroke-width: 1.5; cursor: pointer; }
+.nodes circle:hover { stroke: #58a6ff; stroke-width: 2.5; }
+.nodes text { font-size: 10px; fill: #8b949e; pointer-events: none; }
+.nodes text.highlight { fill: #c9d1d9; font-weight: bold; }
+
+#info {
+  position: fixed; bottom: 16px; left: 16px; right: 16px; z-index: 100;
+  background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+  padding: 16px; font-size: 13px; max-height: 200px; overflow-y: auto;
+  display: none; opacity: 0.95;
+}
+#info h3 { color: #58a6ff; margin-bottom: 6px; font-size: 14px; }
+#info .decl { color: #7ee787; }
+#info .err { color: #f85149; }
+#info .meta { color: #8b949e; font-size: 11px; }
+#info .opts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+#info .opts span { background: #21262d; padding: 2px 8px; border-radius: 4px; font-size: 11px; color: #d2a8ff; }
+
+#legend {
+  position: fixed; top: 16px; right: 16px; z-index: 200;
+  background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+  padding: 12px 16px; font-size: 12px; line-height: 1.8;
+}
+#legend .row { display: flex; align-items: center; gap: 8px; }
+#legend .swatch { width: 14px; height: 14px; border-radius: 50%; border: 1px solid #30363d; }
+#legend .swatch.cycle { border-color: #f85149; background: #f85149; }
+#legend .swatch.nixos { background: #2ea44f; }
+#legend .swatch.user { background: #58a6ff; }
+#legend .swatch.plain { background: #8b949e; }
+
+#title {
+  position: fixed; top: 16px; left: 16px; z-index: 200;
+  color: #8b949e; font-size: 12px;
+}
+#title strong { color: #c9d1d9; }
+
+.zoom-controls {
+  position: fixed; bottom: 240px; right: 16px; z-index: 200;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.zoom-controls button {
+  background: #21262d; border: 1px solid #30363d; color: #c9d1d9;
+  width: 32px; height: 32px; border-radius: 6px; cursor: pointer; font-size: 16px;
+}
+.zoom-controls button:hover { background: #30363d; }
+</style>
+</head>
+<body>
+
+<div id="title"><strong>nixos-module-graph</strong> — NixOS module import graph</div>
+
+<div id="legend">
+  <div class="row"><span class="swatch nixos"></span> nixpkgs module</div>
+  <div class="row"><span class="swatch user"></span> user module</div>
+  <div class="row"><span class="swatch cycle"></span> cycle</div>
+  <div class="row"><span class="swatch plain"></span> other</div>
+</div>
+
+<div class="zoom-controls">
+  <button id="zoom-in" title="Zoom in">+</button>
+  <button id="zoom-out" title="Zoom out">−</button>
+  <button id="zoom-reset" title="Reset">⟲</button>
+</div>
+
+<svg id="graph"></svg>
+
+<div id="info"></div>
+
+<script>
+/*__GRAPH_DATA__*/
+var optionData = null;
+
+const width = window.innerWidth;
+const height = window.innerHeight;
+
+const svg = d3.select("#graph")
+  .attr("width", width)
+  .attr("height", height);
+
+const g = svg.append("g");
+
+// Zoom
+const zoom = d3.zoom()
+  .scaleExtent([0.1, 8])
+  .on("zoom", (event) => g.attr("transform", event.transform));
+svg.call(zoom);
+
+d3.select("#zoom-in").on("click", () => zoom.scaleBy(svg.transition().duration(300), 1.3));
+d3.select("#zoom-out").on("click", () => zoom.scaleBy(svg.transition().duration(300), 0.7));
+d3.select("#zoom-reset").on("click", () => svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity));
+
+// Process graph data
+const data = graphData;
+const nodesMap = new Map();
+data.nodes.forEach(n => nodesMap.set(n.id, n));
+
+const nodeIds = new Set(data.nodes.map(n => n.id));
+const linkSet = new Set();
+
+const links = data.edges
+  .filter(e => nodeIds.has(e.source) && nodeIds.has(e.target) && e.source !== e.target)
+  .filter(e => {
+    const key = `${e.source}→${e.target}`;
+    if (linkSet.has(key)) return false;
+    linkSet.add(key);
+    return true;
+  });
+
+const cycles = new Set();
+links.forEach(l => {
+  if (data.edges.some(e => e.source === l.target && e.target === l.source)) {
+    const n = nodesMap.get(l.source);
+    if (n && n.cycle) cycles.add(l.source);
+  }
+});
+
+// Classify nodes
+data.nodes.forEach(n => {
+  if (n.cycle || n.error) n._class = "cycle";
+  else if (n.file.includes("/nixpkgs/") || n.file.includes("/nixos/") || n.id.includes("/nix/store/")) n._class = "nixos";
+  else n._class = "user";
+});
+
+// Color scheme
+const colors = { nixos: "#2ea44f", user: "#58a6ff", cycle: "#f85149", other: "#8b949e" };
+
+// Simulation
+const simulation = d3.forceSimulation(data.nodes)
+  .force("link", d3.forceLink(links).id(d => d.id).distance(80))
+  .force("charge", d3.forceManyBody().strength(-300))
+  .force("center", d3.forceCenter(width / 2, height / 2))
+  .force("collision", d3.forceCollide().radius(20));
+
+const linkGroup = g.append("g").attr("class", "links");
+const nodeGroup = g.append("g").attr("class", "nodes");
+
+const linkElements = linkGroup.selectAll("line")
+  .data(links)
+  .join("line")
+  .attr("stroke", d => {
+    const s = nodesMap.get(d.source.id || d.source);
+    return (s && (s.cycle || s.error)) ? "#f85149" : "#30363d";
+  })
+  .attr("stroke-dasharray", d => {
+    const s = nodesMap.get(d.source.id || d.source);
+    return (s && (s.cycle || s.error)) ? "4" : null;
+  })
+  .attr("stroke-width", 1.5);
+
+const nodeElements = nodeGroup.selectAll("g")
+  .data(data.nodes)
+  .join("g")
+  .attr("transform", d => `translate(${d.x || width/2}, ${d.y || height/2})`)
+  .call(d3.drag()
+    .on("start", (event, d) => {
+      if (!event.active) simulation.alphaTarget(0.3).restart();
+      d.fx = d.x; d.fy = d.y;
+    })
+    .on("drag", (event, d) => { d.fx = event.x; d.fy = event.y; })
+    .on("end", (event, d) => {
+      if (!event.active) simulation.alphaTarget(0);
+      d.fx = null; d.fy = null;
+    })
+  );
+
+nodeElements.append("circle")
+  .attr("r", d => Math.min(12, 6 + Math.sqrt(d.options.length || 1)))
+  .attr("fill", d => colors[d._class] || colors.other)
+  .attr("stroke", d => (d.cycle || d.error) ? "#f85149" : "#161b22");
+
+nodeElements.append("text")
+  .text(d => {
+    const parts = d.file.replace(/\/nix\/store\/[^/]+\//, "").split("/");
+    return parts.slice(-2).join("/");
+  })
+  .attr("dx", 16)
+  .attr("dy", 4);
+
+// Tooltip / info panel
+const infoPanel = d3.select("#info");
+
+nodeElements.on("click", (event, d) => {
+  const file = d.file;
+  const opts = d.options || [];
+  const cycle = d.cycle || false;
+  const err = d.error || null;
+
+  let html = `<h3>${file}</h3>`;
+  html += `<div class="meta">`;
+  if (cycle) html += `<span class="err">⚠ CYCLE DETECTED</span><br>`;
+  if (err) html += `<span class="err">⚠ ${err}</span><br>`;
+  html += `options: ${opts.length}</div>`;
+
+  if (opts.length > 0) {
+    html += `<div class="opts">`;
+    opts.slice(0, 100).forEach(o => { html += `<span>${o}</span>`; });
+    if (opts.length > 100) html += `<span>… +${opts.length - 100} more</span>`;
+    html += `</div>`;
+  }
+
+  if (optionData && optionData.option) {
+    const decls = optionData.declarations || [];
+    if (decls.includes(file)) {
+      html += `<div class="decl" style="margin-top:8px">→ declares <strong>${optionData.option}</strong></div>`;
+    }
+  }
+
+  infoPanel.html(html).style("display", "block");
+});
+
+d3.select("body").on("click", (event) => {
+  if (event.target.tagName === "svg" || event.target === document.body) {
+    infoPanel.style("display", "none");
+  }
+});
+
+// Simulation tick
+simulation.on("tick", () => {
+  linkElements
+    .attr("x1", d => d.source.x)
+    .attr("y1", d => d.source.y)
+    .attr("x2", d => d.target.x)
+    .attr("y2", d => d.target.y);
+
+  nodeElements
+    .attr("transform", d => `translate(${d.x}, ${d.y})`);
+});
+
+// Handle resize
+window.addEventListener("resize", () => {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  svg.attr("width", w).attr("height", h);
+  simulation.force("center", d3.forceCenter(w / 2, h / 2));
+  simulation.alpha(0.3).restart();
+});
+
+// Search
+d3.select("body").on("keydown", (event) => {
+  if (event.key === "Escape") infoPanel.style("display", "none");
+});
+</script>
+</body>
+</html>

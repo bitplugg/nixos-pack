@@ -10,4 +10,5 @@
 #  pomo = pkgs.callPackage ./pomo { };
   brrfetch = pkgs.callPackage ./brrfetch { };
   rkn-block-checker = pkgs.callPackage ./rkn-block-checker { };
+  nixos-module-graph = pkgs.callPackage ./nixos-module-graph { };
 }

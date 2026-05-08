@@ -1,0 +1,516 @@
+#!/usr/bin/env python3
+"""nixos-module-graph — analyse NixOS module import structure and build visual graphs.
+
+Author: bitplugg
+License: MIT
+"""
+
+import argparse
+import http.server
+import json
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+import textwrap
+
+VERSION = "0.1.0"
+AUTHOR = "bitplugg"
+
+
+def fatal(msg):
+    print(f"error: {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def find_cmd(name):
+    cmd = shutil.which(name)
+    if not cmd:
+        fatal(f"'{name}' not found — please install it")
+    return cmd
+
+
+def find_self_dir():
+    return os.path.dirname(os.path.abspath(__file__))
+
+
+def find_share_dir():
+    d = find_self_dir()
+    for candidate in (
+        os.path.join(d, "..", "share", "nixos-module-graph"),
+        os.path.join(d, "..", "..", "share", "nixos-module-graph"),
+        os.path.join(d, "..", "lib", "nixos-module-graph"),
+        os.path.join(d, "..", "..", "lib", "nixos-module-graph"),
+    ):
+        if os.path.isdir(candidate):
+            return candidate
+    return d
+
+
+def nix_instantiate(nix_file, args, timeout=30):
+    nix = find_cmd("nix-instantiate")
+    cmd = [nix, "--eval", "--strict", "--json", nix_file]
+    for k, v in args.items():
+        cmd.extend(["--argstr", k, str(v)])
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        if r.returncode != 0:
+            return None, r.stderr.strip()
+        return json.loads(r.stdout), None
+    except subprocess.TimeoutExpired:
+        return None, "evaluation timed out"
+    except json.JSONDecodeError as e:
+        return None, f"JSON decode: {e}"
+    except Exception as e:
+        return None, str(e)
+
+
+def nix_eval(expr, timeout=30):
+    nix = find_cmd("nix")
+    cmd = [nix, "eval", "--json", "--impure", "--expr", expr, "--no-warn-dirty"]
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        if r.returncode != 0:
+            return None, r.stderr.strip()
+        return json.loads(r.stdout), None
+    except subprocess.TimeoutExpired:
+        return None, "evaluation timed out"
+    except json.JSONDecodeError as e:
+        return None, f"JSON decode: {e}"
+    except Exception as e:
+        return None, str(e)
+
+
+def flake_options(flake_uri, timeout=60):
+    host = flake_uri.split("#")[-1]
+    flake_path = flake_uri.split("#")[0] if "#" in flake_uri else "."
+    expr = (
+        "let\n"
+        '  flake = builtins.getFlake "{}";\n'
+        "  cfg = flake.nixosConfigurations.{};\n"
+        "  optNames = builtins.attrNames cfg.options;\n"
+        "  take = n: l: if n >= builtins.length l then l else builtins.genList (i: builtins.elemAt l i) n;\n"
+        "in\n"
+        "  builtins.map (name: {{\n"
+        "    option = name;\n"
+        '    declarations = cfg.options.${{name}}.declarations or [];\n'
+        "    type = if cfg.options.${{name}} ? type then cfg.options.${{name}}.type.description or \"unknown\" else null;\n"
+        '    description = cfg.options.${{name}}.description or "";\n'
+        "  }})\n"
+        "  (take 2000 optNames)\n"
+    ).format(flake_path, host)
+    data, err = nix_eval(expr, timeout)
+    if err:
+        return None, err
+    return data, None
+
+
+def extract_graph(config_path, max_depth=100):
+    share = find_share_dir()
+    graph_nix = os.path.join(share, "graph.nix")
+    if not os.path.exists(graph_nix):
+        graph_nix = os.path.join(find_self_dir(), "graph.nix")
+    if not os.path.exists(graph_nix):
+        fatal(f"graph.nix not found (looked in {share} and {find_self_dir()})")
+
+    config_path = os.path.abspath(config_path)
+    if not os.path.exists(config_path):
+        fatal(f"config file not found: {config_path}")
+
+    data, err = nix_instantiate(graph_nix, {
+        "configFile": config_path,
+        "maxDepth": str(max_depth),
+    })
+    if err:
+        fatal(f"graph extraction failed: {err}")
+    return data
+
+
+def analyze_option(config_path, option_name):
+    share = find_share_dir()
+    option_nix = os.path.join(share, "option.nix")
+    if not os.path.exists(option_nix):
+        option_nix = os.path.join(find_self_dir(), "option.nix")
+    if not os.path.exists(option_nix):
+        fatal(f"option.nix not found")
+
+    config_path = os.path.abspath(config_path)
+    data, err = nix_instantiate(option_nix, {
+        "configFile": config_path,
+        "optionName": option_name,
+    }, timeout=60)
+    if err:
+        fatal(f"option analysis failed: {err}")
+    return data
+
+
+# ---------------------------------------------------------------------------
+# Graph flattening helpers
+# ---------------------------------------------------------------------------
+
+def flatten_graph(node, nodes=None, edges=None, path="root"):
+    if nodes is None:
+        nodes = {}
+    if edges is None:
+        edges = []
+    node_id = path
+    nodes[node_id] = node
+    for i, child in enumerate(node.get("imports", [])):
+        child_id = f"{path}.{i}"
+        edges.append((node_id, child_id, child.get("file", "?")))
+        flatten_graph(child, nodes, edges, child_id)
+    return nodes, edges
+
+
+def collect_files(node, files=None, visited=None):
+    if files is None:
+        files = {}
+    if visited is None:
+        visited = set()
+    f = node.get("file", "unknown")
+    if f in visited:
+        return files
+    visited.add(f)
+    files[f] = files.get(f, 0) + 1
+    files.setdefault("_options_" + f, node.get("options", []))
+    for child in node.get("imports", []):
+        collect_files(child, files, visited)
+    return files
+
+
+def collect_nodes_edges(node, nodes=None, edges=None, parent=None):
+    if nodes is None:
+        nodes = {}
+    if edges is None:
+        edges = []
+    f = node.get("file", "unknown")
+    if f not in nodes:
+        nodes[f] = {
+            "file": f,
+            "options": node.get("options", []),
+            "cycle": node.get("cycle", False),
+            "error": node.get("error"),
+            "depth": 0,
+        }
+    if parent and parent != f:
+        edges.append({"source": parent, "target": f})
+    for child in node.get("imports", []):
+        collect_nodes_edges(child, nodes, edges, f)
+    return nodes, edges
+
+
+# ---------------------------------------------------------------------------
+# Output formatters
+# ---------------------------------------------------------------------------
+
+def format_text(node, prefix="", is_last=True, depth=0, seen=None):
+    if seen is None:
+        seen = set()
+    lines = []
+    f = node.get("file", "?")
+    marker = ""
+    if node.get("cycle"):
+        marker = " [CYCLE] "
+    if node.get("error"):
+        marker = f" [{node['error']}] "
+
+    if depth == 0:
+        lines.append(f"· {f}{marker}")
+    else:
+        connector = "└── " if is_last else "├── "
+        lines.append(f"{prefix}{connector}{f}{marker}")
+
+    if node.get("cycle"):
+        pass
+    elif f in seen:
+        lines.append(f"{prefix}    └── ... (already shown)")
+    else:
+        seen.add(f)
+        children = node.get("imports", [])
+        for i, child in enumerate(children):
+            is_last_child = i == len(children) - 1
+            new_prefix = prefix + ("    " if is_last else "│   ")
+            child_lines = format_text(child, new_prefix, is_last_child, depth + 1, seen)
+            lines.extend(child_lines)
+
+    return lines
+
+
+def export_dot(nodes, edges):
+    lines = ['digraph NixOSModules {']
+    lines.append('  rankdir=LR;')
+    lines.append('  node [shape=box, style=rounded, fontname="monospace", fontsize=10];')
+    lines.append('  edge [color="#666666", arrowhead=open];')
+    lines.append('')
+
+    for f, info in nodes.items():
+        label = os.path.basename(f) if f != "root" else f
+        opts = info.get("options", [])
+        attrs = []
+        if info.get("cycle"):
+            attrs.append('color=red, penwidth=2')
+        elif info.get("error"):
+            attrs.append('color=orange, penwidth=2')
+        elif opts:
+            attrs.append('color="#2ea44f", penwidth=1.5')
+        else:
+            attrs.append('color="#888888"')
+        escaped = f.replace('"', '\\"')
+        lines.append(f'  "{escaped}" [label="{label}"{" " + ", ".join(attrs) if attrs else ""}];')
+
+    lines.append('')
+    for edge in edges:
+        src = edge["source"].replace('"', '\\"')
+        tgt = edge["target"].replace('"', '\\"')
+        lines.append(f'  "{src}" -> "{tgt}";')
+
+    lines.append('}')
+    return '\n'.join(lines)
+
+
+def export_html(nodes, edges, option_info=None):
+    share = find_share_dir()
+    static_dir = os.path.join(share, "static")
+    template = os.path.join(static_dir, "index.html")
+    if not os.path.exists(template):
+        template = os.path.join(find_self_dir(), "static", "index.html")
+    if not os.path.exists(template):
+        fatal(f"static/index.html not found")
+
+    with open(template) as f:
+        html = f.read()
+
+    nodes_list = []
+    for f, info in nodes.items():
+        nodes_list.append({
+            "id": f,
+            "file": f,
+            "basename": os.path.basename(f),
+            "options": info.get("options", []),
+            "cycle": info.get("cycle", False),
+            "error": info.get("error"),
+        })
+
+    edges_list = []
+    for e in edges:
+        edges_list.append({"source": e["source"], "target": e["target"]})
+
+    graph_data = json.dumps({"nodes": nodes_list, "edges": edges_list})
+    html = html.replace("/*__GRAPH_DATA__*/", f"var graphData = {graph_data};")
+
+    if option_info:
+        html = html.replace("/*__OPTION_DATA__*/", f"var optionData = {json.dumps(option_info)};")
+    else:
+        html = html.replace("/*__OPTION_DATA__*/", "var optionData = null;")
+
+    return html
+
+
+def export_json(nodes, edges, option_info=None):
+    result = {
+        "metadata": {
+            "tool": "nixos-module-graph",
+            "version": VERSION,
+            "author": AUTHOR,
+        },
+        "nodes": [{
+            "id": f,
+            "file": f,
+            "options": info.get("options", []),
+            "cycle": info.get("cycle", False),
+            "error": info.get("error"),
+        } for f, info in nodes.items()],
+        "edges": [{"source": e["source"], "target": e["target"]} for e in edges],
+    }
+    if option_info:
+        result["option"] = option_info
+    return json.dumps(result, indent=2)
+
+
+# ---------------------------------------------------------------------------
+# Output format dispatch
+# ---------------------------------------------------------------------------
+
+def write_output(graph, output_path, fmt, option_info=None):
+    nodes, edges = collect_nodes_edges(graph)
+
+    if fmt == "dot":
+        content = export_dot(nodes, edges)
+    elif fmt == "json":
+        content = export_json(nodes, edges, option_info)
+    elif fmt == "html":
+        content = export_html(nodes, edges, option_info)
+    else:
+        fatal(f"unknown format: {fmt}")
+
+    if output_path:
+        with open(output_path, "w") as f:
+            f.write(content)
+        print(f"written: {output_path}")
+    else:
+        print(content)
+
+
+# ---------------------------------------------------------------------------
+# HTTP server
+# ---------------------------------------------------------------------------
+
+def start_server(graph, port, option_info=None):
+    nodes, edges = collect_nodes_edges(graph)
+    html_content = export_html(nodes, edges, option_info)
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            if self.path == "/":
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(html_content.encode("utf-8"))
+            elif self.path == "/data":
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(export_json(nodes, edges, option_info).encode("utf-8"))
+            elif self.path.startswith("/static/"):
+                self.send_error(404)
+            else:
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.end_headers()
+                self.wfile.write(html_content.encode("utf-8"))
+        def log_message(self, fmt, *args):
+            sys.stderr.write(f"[{self.address_string()}] {fmt % args}\n")
+
+    print(f"starting server at http://localhost:{port}")
+    httpd = http.server.HTTPServer(("", port), Handler)
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print("\nshutting down")
+
+
+# ---------------------------------------------------------------------------
+# Flake-based analysis (option-based fallback)
+# ---------------------------------------------------------------------------
+
+def build_graph_from_flake_options(options_data):
+    nodes = {}
+    edges = []
+    for item in options_data:
+        for decl in item.get("declarations", []):
+            if decl not in nodes:
+                nodes[decl] = {
+                    "file": decl,
+                    "options": [],
+                    "cycle": False,
+                    "error": None,
+                }
+            nodes[decl]["options"].append(item["option"])
+    return nodes, edges
+
+
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        prog="nixos-module-graph",
+        description="Visualise NixOS module import structure as a graph",
+        epilog="Author: bitplugg",
+    )
+
+    src = parser.add_mutually_exclusive_group(required=True)
+    src.add_argument("--config", metavar="PATH", help="configuration.nix or NixOS config file")
+    src.add_argument("--flake", metavar="URI#NAME", help="flake URI with hostname, e.g. .#my-server")
+
+    parser.add_argument("-o", "--output", metavar="FILE", help="output file (ext: .html / .dot / .json)")
+    parser.add_argument("--option", metavar="NAME", help="analyse a specific option (e.g. services.nginx.enable)")
+    parser.add_argument("--text", action="store_true", help="print ASCII tree graph to terminal")
+    parser.add_argument("--serve", action="store_true", help="start web server with interactive graph (d3.js)")
+    parser.add_argument("--port", type=int, default=8080, help="HTTP port (default: 8080)")
+    parser.add_argument("--max-depth", type=int, default=100, help="max recursion depth (default: 100)")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
+
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+
+    graph = None
+    option_info = None
+
+    if args.config:
+        if not os.path.exists(args.config):
+            fatal(f"config not found: {args.config}")
+
+        print(f"extracting module graph from {args.config} ...", file=sys.stderr)
+        graph = extract_graph(args.config, args.max_depth)
+        print(f"  root: {graph['file']}", file=sys.stderr)
+        print(f"  module count: {count_imports(graph)}", file=sys.stderr)
+
+        if args.option:
+            print(f"analysing option '{args.option}' ...", file=sys.stderr)
+            option_info = analyze_option(args.config, args.option)
+            print(f"  declarations: {len(option_info.get('declarations', []))} files", file=sys.stderr)
+            print(f"  definitions: {len(option_info.get('definitions', []))}", file=sys.stderr)
+
+    elif args.flake:
+        print(f"analysing flake {args.flake} ...", file=sys.stderr)
+        options_data, err = flake_options(args.flake)
+        if err:
+            fatal(f"flake analysis: {err}")
+        nodes, edges = build_graph_from_flake_options(options_data)
+        graph = {"file": args.flake, "options": [], "imports": [], "cycle": False}
+        print(f"  options found: {len(options_data)}", file=sys.stderr)
+        print(f"  declaration files: {len(nodes)}", file=sys.stderr)
+        if args.option:
+            for item in options_data:
+                if item["option"] == args.option:
+                    option_info = item
+                    break
+            if option_info:
+                print(f"  option '{args.option}' found in {len(option_info.get('declarations', []))} files", file=sys.stderr)
+            else:
+                print(f"  option '{args.option}' not found", file=sys.stderr)
+
+    # Determine output format
+    fmt = None
+    if args.output:
+        ext = os.path.splitext(args.output)[1].lower()
+        fmt = {"": "json", ".html": "html", ".htm": "html", ".dot": "dot", ".gv": "dot", ".json": "json", ".json5": "json"}.get(ext, "json")
+    elif args.text:
+        fmt = "text"
+    elif args.serve:
+        fmt = "html"
+
+    if fmt == "text":
+        for line in format_text(graph):
+            print(line)
+    elif fmt:
+        write_output(graph, args.output, fmt, option_info)
+    else:
+        for line in format_text(graph):
+            print(line)
+
+    if args.serve:
+        start_server(graph, args.port, option_info)
+
+
+def count_imports(node, seen=None):
+    if seen is None:
+        seen = set()
+    f = node.get("file", "")
+    if f in seen:
+        return 0
+    seen.add(f)
+    count = 1
+    for child in node.get("imports", []):
+        count += count_imports(child, seen)
+    return count
+
+
+if __name__ == "__main__":
+    main()
