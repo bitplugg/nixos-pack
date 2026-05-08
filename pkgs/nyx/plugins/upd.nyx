@@ -1,0 +1,122 @@
+#!/usr/bin/env python3
+import os
+import sys
+import subprocess
+import configparser
+import time
+from pathlib import Path
+
+# --- Цвета и стили ---
+class Colors:
+    HEADER = '\033[95m'
+    BLUE = '\033[94m'
+    CYAN = '\033[96m'
+    GREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+def print_banner():
+    print(f"\n{Colors.BOLD}{Colors.CYAN}╔══════════════════════════════════════╗{Colors.ENDC}")
+    print(f"{Colors.BOLD}{Colors.CYAN}║          NYX UPDATE SYSTEM           ║{Colors.ENDC}")
+    print(f"{Colors.BOLD}{Colors.CYAN}╚══════════════════════════════════════╝{Colors.ENDC}\n")
+
+def print_step(message):
+    print(f"{Colors.BLUE}[✦]{Colors.ENDC} {message}")
+
+def print_success(message):
+    print(f"{Colors.GREEN}[✓]{Colors.ENDC} {message}")
+
+def print_error(message):
+    print(f"{Colors.FAIL}[✗]{Colors.ENDC} {message}")
+
+def print_warning(message):
+    print(f"{Colors.WARNING}[!]{Colors.ENDC} {message}")
+
+def loading_animation(duration=1.5, message="Загрузка..."):
+    frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+    end_time = time.time() + duration
+    while time.time() < end_time:
+        for frame in frames:
+            sys.stdout.write(f"\r{Colors.CYAN}{frame}{Colors.ENDC} {message}")
+            sys.stdout.flush()
+            time.sleep(0.05)
+    sys.stdout.write("\r" + " " * (len(message) + 2) + "\r") # Очистка строки
+    sys.stdout.flush()
+
+def get_config_path():
+    home = Path.home()
+    candidates = [
+        home / ".config" / "nyx" / "config.ini",
+        home / ".nyx" / "config.ini",
+        Path("/etc/nyx/config.ini")
+    ]
+    for path in candidates:
+        if path.exists():
+            return path
+    return None
+
+def main():
+    print_banner()
+    
+    config_path = get_config_path()
+    command = None
+    config_file_used = "Нет (используется значение по умолчанию)"
+
+    # Чтение команды из конфига
+    if config_path:
+        config_file_used = str(config_path)
+        config = configparser.ConfigParser()
+        config.read(config_path)
+        if 'commands' in config and 'upd' in config['commands']:
+            command = config['commands']['upd']
+    
+    # Команда по умолчанию
+    if not command:
+        command = "clear && cd $HOME/nixos-config && clear && maxfetch && sudo nixos-rebuild switch --flake .#laptop && echo 'Done! Please check'"
+
+    print_step(f"Конфигурация: {Colors.BOLD}{config_file_used}{Colors.ENDC}")
+    print_step(f"Команда: {Colors.UNDERLINE}{command[:50]}...{Colors.ENDC}" if len(command) > 50 else f"Команда: {Colors.UNDERLINE}{command}{Colors.ENDC}")
+    print()
+
+    # Проверка на sudo (опционально, так как команда может сама запрашивать пароль)
+    # Но мы можем предупредить, если команда требует sudo, а мы не в корне
+    if "sudo" in command and os.geteuid() != 0:
+        print_warning("Обнаружена команда с sudo. Потребуется ввод пароля.")
+
+    try:
+        print_step("Инициализация процесса...")
+        loading_animation(1.0, "Подготовка окружения")
+        
+        print(f"\n{Colors.BOLD}--- Начало выполнения ---{Colors.ENDC}\n")
+        
+        # Выполнение команды
+        # shell=True необходим для работы &&, || и переменных окружения
+        result = subprocess.run(
+            command, 
+            shell=True, 
+            executable="/bin/bash",
+            env=os.environ  # Передаем текущие переменные окружения
+        )
+        
+        print(f"\n{Colors.BOLD}--- Конец выполнения ---{Colors.ENDC}\n")
+
+        if result.returncode == 0:
+            print_success("Операция завершена успешно!")
+            print(f"{Colors.GREEN}✨ Система обновлена и готова к работе.{Colors.ENDC}")
+        else:
+            print_error(f"Процесс завершился с кодом ошибки: {result.returncode}")
+            print_warning("Пожалуйста, проверьте логи выше для деталей.")
+            sys.exit(result.returncode)
+
+    except KeyboardInterrupt:
+        print(f"\n\n{Colors.WARNING}⚠ Процесс прерван пользователем.{Colors.ENDC}")
+        sys.exit(130)
+    except Exception as e:
+        print_error(f"Критическая ошибка: {e}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()

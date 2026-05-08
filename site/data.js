@@ -571,9 +571,9 @@ function renderPluginStore() {
 
   var html = '<table class="plugin-table"><thead><tr>';
   if (LANG === "en") {
-    html += '<th>Plugin</th><th>Description</th><th>Language</th><th>Rating</th><th>Downloads</th>';
+    html += '<th>Plugin</th><th>Description</th><th>Language</th><th>Rating</th><th>Downloads</th><th></th>';
   } else {
-    html += '<th>Плагин</th><th>Описание</th><th>Язык</th><th>Рейтинг</th><th>Скачивания</th>';
+    html += '<th>Плагин</th><th>Описание</th><th>Язык</th><th>Рейтинг</th><th>Скачивания</th><th></th>';
   }
   html += '</tr></thead><tbody>';
 
@@ -582,12 +582,14 @@ function renderPluginStore() {
     var stars = "";
     for (var s = 0; s < Math.floor(p.r); s++) stars += "★";
     if (p.r - Math.floor(p.r) >= 0.5) stars += "½";
+    var url = 'https://raw.githubusercontent.com/bitplugg/nixos-pack/master/pkgs/nyx/plugins/' + p.name + '.nyx';
     html += '<tr>';
     html += '<td><code>' + p.name + '</code></td>';
     html += '<td>' + p.desc + '</td>';
     html += '<td>' + p.lang + '</td>';
     html += '<td class="stars">' + stars + '</td>';
     html += '<td>' + p.dl + '</td>';
+    html += '<td><a href="' + url + '" class="dl-btn" download>' + (LANG === "en" ? '⬇' : '⬇') + '</a></td>';
     html += '</tr>';
   }
   html += '</tbody></table>';
