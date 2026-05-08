@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""nixos-module-graph — analyse NixOS module import structure and build visual graphs.
+"""nixos-module-graph — analyse NixOS module import structure in beautiful TUI and graphs.
 
 Author: bitplugg <zxckillka.off@gmail.com>
 License: MIT
@@ -13,13 +13,47 @@ import re
 import shutil
 import subprocess
 import sys
+from datetime import datetime
 
 VERSION = "0.1.0"
 AUTHOR = "bitplugg <zxckillka.off@gmail.com>"
 
+# ── ANSI colors ─────────────────────────────────────────────
+C = {
+    "reset": "\033[0m",
+    "bold": "\033[1m",
+    "dim": "\033[2m",
+    "red": "\033[31m",
+    "green": "\033[32m",
+    "yellow": "\033[33m",
+    "blue": "\033[34m",
+    "magenta": "\033[35m",
+    "cyan": "\033[36m",
+    "white": "\033[37m",
+    "bg_red": "\033[41m",
+    "bg_green": "\033[42m",
+    "bg_blue": "\033[44m",
+    "bg_grey": "\033[100m",
+}
+
+RED = "\033[31m"
+GREEN = "\033[32m"
+YELLOW = "\033[33m"
+BLUE = "\033[34m"
+MAGENTA = "\033[35m"
+CYAN = "\033[36m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+RESET = "\033[0m"
+
+def colorize(text, *codes):
+    return "".join(codes) + text + RESET
+
+
+# ── Helpers ─────────────────────────────────────────────────
 
 def fatal(msg):
-    print(f"error: {msg}", file=sys.stderr)
+    print(f"{RED}error:{RESET} {msg}", file=sys.stderr)
     sys.exit(1)
 
 
@@ -93,7 +127,37 @@ def nix_eval(expr, timeout=30):
         return None, str(e)
 
 
-# ── Flake URI helpers ────────────────────────────────────────
+# ── Module source classifier ────────────────────────────────
+
+def classify_module(filepath):
+    if "nix/store" in filepath and ("nixpkgs" in filepath or "nixos" in filepath):
+        return "nixpkgs"
+    if "/nixos/" in filepath and "/modules/" in filepath:
+        return "nixpkgs"
+    if filepath.startswith("/nix/store/"):
+        return "store"
+    if filepath.startswith("/etc/nixos") or filepath.startswith("/home/"):
+        return "user"
+    if filepath.startswith("flake:"):
+        return "flake"
+    if filepath in ("anonymous", "unknown", "?"):
+        return "other"
+    return "local"
+
+
+def file_short(filepath, max_len=50):
+    if len(filepath) <= max_len:
+        return filepath
+    m = re.search(r"/nix/store/[^/]+/(.*)", filepath)
+    if m:
+        short = m.group(1)
+        if len(short) <= max_len:
+            return short
+        return "…" + short[-(max_len - 1):]
+    return "…" + filepath[-(max_len - 1):]
+
+
+# ── Flake URI and parsing ───────────────────────────────────
 
 def parse_flake_uri(uri):
     if "#" in uri:
@@ -102,6 +166,96 @@ def parse_flake_uri(uri):
     else:
         path, host = ".", uri
     return path, host
+
+
+def parse_flake_nix_for_modules(flake_dir):
+    """Parse flake.nix to extract hostname -> module paths mappings."""
+    flake_nix = os.path.join(flake_dir, "flake.nix")
+    if not os.path.isfile(flake_nix):
+        return {}
+
+    with open(flake_nix) as f:
+        content = f.read()
+
+    hosts = {}
+
+    # Find nixosConfigurations.<name> patterns
+    for m in re.finditer(r'nixosConfigurations\.(\w+)\s*=', content):
+        hostname = m.group(1)
+        # Extract modules list from this context
+        start = m.end()
+        # Find the nixosSystem call and its modules
+        sys_m = re.search(r'nixosSystem\s*\{', content[start:start + 2000])
+        if not sys_m:
+            # Try to find module references differently
+            continue
+        sys_start = start + sys_m.end()
+
+        # Find the modules = [ ... ] list
+        # Look for modules within reasonable range
+        chunk = content[sys_start:sys_start + 3000]
+        mod_m = re.search(r'modules\s*=\s*\[', chunk)
+        if not mod_m:
+            continue
+        mod_start = sys_start + mod_m.end()
+
+        # Extract paths until closing bracket
+        depth = 1
+        i = mod_start
+        paths = []
+        while i < len(content) and depth > 0:
+            c = content[i]
+            if c == '[':
+                depth += 1
+            elif c == ']':
+                depth -= 1
+            elif depth == 1 and c == '.' and i + 1 < len(content) and content[i + 1] in ('/', '"'):
+                # Path starting with ./
+                start_i = i
+                while i < len(content) and content[i] not in (' ', '\t', '\n', ']', ';', ')'):
+                    i += 1
+                raw_path = content[start_i:i].strip()
+                if raw_path:
+                    paths.append(raw_path)
+                continue
+            elif depth == 1 and c in ('"', "'"):
+                quote = c
+                start_i = i
+                i += 1
+                while i < len(content) and content[i] != quote:
+                    if content[i] == '\\':
+                        i += 1
+                    i += 1
+                raw_path = content[start_i:i + 1].strip()
+                if raw_path and not raw_path.startswith('"${'):
+                    paths.append(raw_path.strip('"\''))
+                i += 1
+                continue
+            i += 1
+
+        if paths:
+            hosts[hostname] = paths
+
+    return hosts
+
+
+def try_find_config_in_flake(flake_path):
+    flake_dir = os.path.abspath(flake_path)
+    candidates = [
+        os.path.join(flake_dir, "configuration.nix"),
+        os.path.join(flake_dir, "default.nix"),
+        os.path.join(flake_dir, "config.nix"),
+        os.path.join(flake_dir, "hosts", "default.nix"),
+        os.path.join(flake_dir, "hosts", "configuration.nix"),
+        os.path.join(flake_dir, "nixos", "configuration.nix"),
+    ]
+    for c in candidates:
+        if os.path.isfile(c):
+            return c
+    nix_files = sorted(os.path.join(flake_dir, f) for f in os.listdir(flake_dir) if f.endswith(".nix"))
+    if nix_files:
+        return nix_files[0]
+    return None
 
 
 def flake_options(flake_uri, timeout=60):
@@ -127,24 +281,7 @@ def flake_options(flake_uri, timeout=60):
     return data, None
 
 
-def try_find_config_in_flake(flake_path):
-    flake_dir = os.path.abspath(flake_path)
-    candidates = [
-        os.path.join(flake_dir, "configuration.nix"),
-        os.path.join(flake_dir, "default.nix"),
-        os.path.join(flake_dir, "config.nix"),
-        os.path.join(flake_dir, "hosts", "default.nix"),
-        os.path.join(flake_dir, "hosts", "configuration.nix"),
-        os.path.join(flake_dir, "nixos", "configuration.nix"),
-    ]
-    for c in candidates:
-        if os.path.isfile(c):
-            return c
-    nix_files = sorted(os.path.join(flake_dir, f) for f in os.listdir(flake_dir) if f.endswith(".nix"))
-    if nix_files:
-        return nix_files[0]
-    return None
-
+# ── Graph extraction ────────────────────────────────────────
 
 def extract_graph(config_path, max_depth=100):
     gpath = share_path("graph.nix")
@@ -172,7 +309,15 @@ def analyze_option(config_path, option_name):
     return data
 
 
-# ── Graph flattening ─────────────────────────────────────────
+def count_imports(node, seen=None):
+    if seen is None:
+        seen = set()
+    f = node.get("file", "")
+    if f in seen or node.get("cycle"):
+        return 0
+    seen.add(f)
+    return 1 + sum(count_imports(c, seen) for c in node.get("imports", []))
+
 
 def collect_nodes_edges(node, nodes=None, edges=None, parent=None):
     if nodes is None:
@@ -195,7 +340,181 @@ def collect_nodes_edges(node, nodes=None, edges=None, parent=None):
     return nodes, edges
 
 
-# ── Output formatters ────────────────────────────────────────
+def build_graph_from_flake_options(options_data):
+    nodes = {}
+    for item in options_data:
+        for decl in item.get("declarations", []):
+            if decl not in nodes:
+                nodes[decl] = {"file": decl, "options": [], "cycle": False, "error": None}
+            nodes[decl]["options"].append(item["option"])
+    return nodes, []
+
+
+# ── Beautiful TUI output ────────────────────────────────────
+
+def format_tui(node, prefix="", is_last=True, depth=0, seen=None):
+    """Colored tree output with import source info."""
+    if seen is None:
+        seen = set()
+    lines = []
+    f = node.get("file", "?")
+    kind = classify_module(f)
+    short = file_short(f)
+
+    klass = node.get("cycle", False)
+    err = node.get("error")
+
+    # Color by type
+    if klass:
+        label = colorize(f" ⃤ {short}", BOLD, RED)
+        badge = colorize(" CYCLE ", RED, BOLD)
+    elif err:
+        label = colorize(f" {short}", YELLOW)
+        badge = colorize(f" {err} ", YELLOW, BOLD)
+    else:
+        color_map = {"nixpkgs": GREEN, "store": MAGENTA, "user": CYAN, "local": BLUE, "flake": YELLOW, "other": DIM}
+        c = color_map.get(kind, DIM)
+        label = colorize(f" {short}", c)
+        badge = ""
+
+    # Source badge
+    src_badge = {
+        "nixpkgs": colorize(" nixpkgs ", GREEN + DIM),
+        "store": colorize(" store ", MAGENTA + DIM),
+        "user": colorize(" local ", CYAN + DIM),
+        "local": colorize(" local ", BLUE + DIM),
+        "flake": colorize(" flake ", YELLOW + DIM),
+        "other": "",
+    }.get(kind, "")
+
+    if depth == 0:
+        lines.append(f"{colorize('·', BOLD)}{label}  {badge}{src_badge}")
+        if node.get("options"):
+            lines.append(f"{DIM}   options: {len(node['options'])} declared{RESET}")
+    else:
+        branch = "└──" if is_last else "├──"
+        conn = f"{DIM}{prefix}{branch}{RESET}"
+        rest = "    " if is_last else "│   "
+        np = prefix + rest
+        opt_info = ""
+        if node.get("options") and depth <= 2:
+            opt_info = f" {DIM}({len(node['options'])} opts){RESET}"
+        lines.append(f"{conn}{label}{opt_info} {badge}{src_badge}")
+        # Show import source on deeper levels
+        if depth > 0 and f != "?" and not klass:
+            if kind in ("nixpkgs",):
+                lines.append(f"{DIM}{np}└── from: NixOS module system{RESET}")
+            elif kind in ("store",):
+                lines.append(f"{DIM}{np}└── from: nix store{RESET}")
+            elif kind in ("user", "local"):
+                lines.append(f"{DIM}{np}└── from: user config{RESET}")
+
+    if klass:
+        pass
+    elif f in seen:
+        lines.append(f"{DIM}{'    ' if is_last else '│   '}{prefix}└── ... (already shown){RESET}")
+    else:
+        seen.add(f)
+        children = node.get("imports", [])
+        for i, child in enumerate(children):
+            is_last_child = i == len(children) - 1
+            np2 = prefix + ("    " if is_last else "│   ")
+            child_lines = format_tui(child, np2, is_last_child, depth + 1, seen)
+            lines.extend(child_lines)
+
+    return lines
+
+
+def format_summary(graph, flake_info=None, option_info=None):
+    """Print a beautiful header and summary."""
+    lines = []
+
+    lines.append("")
+    lines.append(colorize("╭──────────────────────────────────────────────╮", BOLD, CYAN))
+    lines.append(colorize("│         nixos-module-graph v{}          │".format(VERSION), BOLD, CYAN))
+    lines.append(colorize("╰──────────────────────────────────────────────╯", BOLD, CYAN))
+    lines.append("")
+
+    total = count_imports(graph)
+    nodes, edges = collect_nodes_edges(graph)
+
+    nixpkgs_ct = sum(1 for f in nodes if classify_module(f) == "nixpkgs")
+    user_ct = sum(1 for f in nodes if classify_module(f) in ("user", "local"))
+    store_ct = sum(1 for f in nodes if classify_module(f) == "store")
+    cycle_ct = sum(1 for f, v in nodes.items() if v.get("cycle"))
+    err_ct = sum(1 for f, v in nodes.items() if v.get("error"))
+
+    lines.append(f"  {colorize('modules', BOLD)}          {total}")
+    lines.append(f"  {colorize('files', BOLD)}            {len(nodes)}")
+    if nixpkgs_ct:
+        lines.append(f"   {colorize(f'{nixpkgs_ct} nixpkgs', GREEN)}")
+    if user_ct:
+        lines.append(f"   {colorize(f'{user_ct} local', BLUE)}")
+    if store_ct:
+        lines.append(f"   {colorize(f'{store_ct} store', MAGENTA)}")
+    if cycle_ct:
+        lines.append(f"   {colorize(f'{cycle_ct} cycles', RED)}")
+    if err_ct:
+        lines.append(f"   {colorize(f'{err_ct} errors', YELLOW)}")
+    lines.append(f"  {colorize('edges', BOLD)}            {len(edges)}")
+
+    if flake_info:
+        lines.append("")
+        lines.append(f"  {colorize('flake', BOLD)}           {colorize(flake_info, DIM)}")
+
+    if option_info and "error" not in option_info:
+        lines.append("")
+        lines.append(f"  {colorize('option', BOLD)}          {option_info.get('option', '?')}")
+        lines.append(f"  {colorize('declarations', BOLD)}   {len(option_info.get('declarations', []))} files")
+        lines.append(f"  {colorize('definitions', BOLD)}    {len(option_info.get('definitions', []))}")
+        if option_info.get("type"):
+            lines.append(f"  {colorize('type', BOLD)}          {option_info['type']}")
+
+    lines.append("")
+    return lines
+
+
+def format_flake_hosts(hosts):
+    lines = []
+    lines.append("")
+    lines.append(colorize("  Hosts found in flake.nix:", BOLD))
+    for host, paths in hosts.items():
+        lines.append(f"   {colorize(host, CYAN, BOLD)}")
+        for p in paths:
+            kind = classify_module(p)
+            c = { "nixpkgs": GREEN, "local": BLUE, "user": CYAN, "store": MAGENTA, "flake": YELLOW }.get(kind, DIM)
+            lines.append(f"    {colorize('└──', DIM)} {colorize(p, c)}")
+    lines.append("")
+    return lines
+
+
+def format_option_details(option_info):
+    if not option_info or "error" in option_info:
+        return [colorize("  option not found", RED)]
+    lines = []
+    lines.append("")
+    lines.append(colorize("╭── Option analysis ──────────────────────────╮", BOLD, CYAN))
+    lines.append(colorize(f"│  {option_info.get('option', '?'):<48}│", BOLD))
+    lines.append(colorize("╰──────────────────────────────────────────────╯", BOLD, CYAN))
+    lines.append("")
+    lines.append(f"  {colorize('type', BOLD)}         {option_info.get('type', '?')}")
+    lines.append(f"  {colorize('default', BOLD)}      {option_info.get('default', 'null')}")
+    if option_info.get("description"):
+        desc = option_info["description"][:80]
+        lines.append(f"  {colorize('description', BOLD)}  {desc}")
+    lines.append("")
+    lines.append(f"  {colorize('Declarations', BOLD, GREEN)} ({len(option_info.get('declarations', []))} files):")
+    for decl in option_info.get("declarations", [])[:15]:
+        kind = classify_module(decl)
+        c = { "nixpkgs": GREEN, "local": BLUE, "user": CYAN, "store": MAGENTA }.get(kind, DIM)
+        lines.append(f"    {colorize('•', c)} {colorize(file_short(decl, 70), c)}")
+    if len(option_info.get("declarations", [])) > 15:
+        lines.append(f"    {DIM}… and {len(option_info['declarations']) - 15} more{RESET}")
+    lines.append("")
+    return lines
+
+
+# ── Export formats ──────────────────────────────────────────
 
 def format_text(node, prefix="", is_last=True, depth=0, seen=None):
     if seen is None:
@@ -235,7 +554,6 @@ def export_dot(nodes, edges):
     lines.append('  node [shape=box, style=rounded, fontname="monospace", fontsize=10];')
     lines.append('  edge [color="#666666", arrowhead=open];')
     lines.append("")
-
     for f, info in nodes.items():
         label = os.path.basename(f) if f != "root" else f
         opts = info.get("options", [])
@@ -250,13 +568,11 @@ def export_dot(nodes, edges):
             attrs.append('color="#888888"')
         escaped = f.replace('"', '\\"')
         lines.append(f'  "{escaped}" [label="{label}"{" " + ", ".join(attrs) if attrs else ""}];')
-
     lines.append("")
     for edge in edges:
         src = edge["source"].replace('"', '\\"')
         tgt = edge["target"].replace('"', '\\"')
         lines.append(f'  "{src}" -> "{tgt}";')
-
     lines.append("}")
     return "\n".join(lines)
 
@@ -280,7 +596,6 @@ def export_html(nodes, edges, option_info=None):
     edges_list = [{"source": e["source"], "target": e["target"]} for e in edges]
     graph_data = json.dumps({"nodes": nodes_list, "edges": edges_list})
     html = html.replace("/*__GRAPH_DATA__*/", f"var graphData = {graph_data};")
-
     opt_js = json.dumps(option_info) if option_info else "null"
     html = html.replace("/*__OPTION_DATA__*/", f"var optionData = {opt_js};")
     return html
@@ -290,8 +605,7 @@ def export_json(nodes, edges, option_info=None):
     result = {
         "metadata": {"tool": "nixos-module-graph", "version": VERSION, "author": AUTHOR},
         "nodes": [{
-            "id": f,
-            "file": f,
+            "id": f, "file": f,
             "options": info.get("options", []),
             "cycle": info.get("cycle", False),
             "error": info.get("error"),
@@ -319,7 +633,7 @@ def write_output(graph, output_path, fmt, option_info=None):
         print(content)
 
 
-# ── HTTP server ──────────────────────────────────────────────
+# ── HTTP server ─────────────────────────────────────────────
 
 def start_server(graph, port, option_info=None):
     nodes, edges = collect_nodes_edges(graph)
@@ -348,21 +662,20 @@ def start_server(graph, port, option_info=None):
         print("\nshutting down")
 
 
-# ── CLI ──────────────────────────────────────────────────────
+# ── CLI ─────────────────────────────────────────────────────
 
 def parse_args():
     parser = argparse.ArgumentParser(
         prog="nixos-module-graph",
-        description="Analyse NixOS module import structure as a graph",
+        description="Analyse NixOS module import structure in beautiful TUI and graphs",
         epilog="Author: bitplugg <zxckillka.off@gmail.com>",
     )
     src = parser.add_mutually_exclusive_group(required=True)
     src.add_argument("--config", metavar="PATH", help="NixOS config file (configuration.nix)")
     src.add_argument("--flake", metavar="URI#NAME", help="flake URI + hostname, e.g. .#nixos")
-
     parser.add_argument("-o", "--output", metavar="FILE", help="output file (.html/.dot/.json)")
     parser.add_argument("--option", metavar="NAME", help="trace a specific option (e.g. services.nginx.enable)")
-    parser.add_argument("--text", action="store_true", help="print ASCII tree to terminal")
+    parser.add_argument("--text", action="store_true", help="print plain ASCII tree")
     parser.add_argument("--serve", action="store_true", help="start d3.js web server")
     parser.add_argument("--port", type=int, default=8080, help="HTTP port (default: 8080)")
     parser.add_argument("--max-depth", type=int, default=100, help="max recursion depth")
@@ -370,63 +683,83 @@ def parse_args():
     return parser.parse_args()
 
 
-def count_imports(node, seen=None):
-    if seen is None:
-        seen = set()
-    f = node.get("file", "")
-    if f in seen or node.get("cycle"):
-        return 0
-    seen.add(f)
-    return 1 + sum(count_imports(c, seen) for c in node.get("imports", []))
-
-
 def main():
     args = parse_args()
     graph = None
     option_info = None
+    flake_info = None
 
     if args.config:
         if not os.path.exists(args.config):
             fatal(f"config not found: {args.config}")
-        print(f"extracting module graph from {args.config} ...", file=sys.stderr)
+
+        print(f"{DIM}extracting from {args.config}...{RESET}", file=sys.stderr)
         graph = extract_graph(args.config, args.max_depth)
-        print(f"  root: {graph['file']}", file=sys.stderr)
-        print(f"  modules: {count_imports(graph)}", file=sys.stderr)
+
         if args.option:
-            print(f"analysing option '{args.option}' ...", file=sys.stderr)
+            print(f"{DIM}analysing option '{args.option}'...{RESET}", file=sys.stderr)
             option_info = analyze_option(args.config, args.option)
-            print(f"  declarations: {len(option_info.get('declarations', []))} files", file=sys.stderr)
-            print(f"  definitions: {len(option_info.get('definitions', []))}", file=sys.stderr)
 
     elif args.flake:
         flake_path, host = parse_flake_uri(args.flake)
-        config_file = try_find_config_in_flake(flake_path)
-        if config_file:
-            print(f"detected config: {config_file}", file=sys.stderr)
-            graph = extract_graph(config_file, args.max_depth)
-            print(f"  modules: {count_imports(graph)}", file=sys.stderr)
-            if args.option:
-                print(f"analysing option '{args.option}' ...", file=sys.stderr)
-                option_info = analyze_option(config_file, args.option)
-                print(f"  declarations: {len(option_info.get('declarations', []))} files", file=sys.stderr)
-        else:
-            print(f"analysing flake {args.flake} (option-based) ...", file=sys.stderr)
+        flake_dir = os.path.abspath(flake_path)
+        flake_info = f"#{host} ({flake_dir})"
+
+        print(f"{DIM}analysing flake {args.flake}...{RESET}", file=sys.stderr)
+
+        # Strategy 1: extract modules from flake.nix
+        hosts = parse_flake_nix_for_modules(flake_dir)
+        if host in hosts and hosts[host]:
+            paths = hosts[host]
+            resolved = []
+            for p in paths:
+                p_clean = p.strip('"').strip("'")
+                if p_clean.startswith("./"):
+                    abspath = os.path.normpath(os.path.join(flake_dir, p_clean))
+                    if os.path.isfile(abspath):
+                        resolved.append(abspath)
+            if resolved:
+                print(f"{DIM}  → module entry points from flake.nix:{RESET}", file=sys.stderr)
+                for r in resolved:
+                    short = file_short(r, 60)
+                    kind = classify_module(r)
+                    c = { "nixpkgs": GREEN, "local": BLUE, "user": CYAN, "store": MAGENTA }.get(kind, DIM)
+                    print(f"    {colorize('•', c)} {colorize(short, c)}", file=sys.stderr)
+
+                # Walk imports from entry points
+                print(f"{DIM}  → walking imports...{RESET}", file=sys.stderr)
+                graph = {"file": f"flake:{host}", "options": [], "imports": [], "cycle": False}
+                for r in resolved:
+                    sub = extract_graph(r, args.max_depth)
+                    # Merge
+                    graph["imports"].append(sub)
+                    for opt in sub.get("options", []):
+                        if opt not in graph["options"]:
+                            graph["options"].append(opt)
+
+        # Strategy 2: try finding config in flake directory
+        if graph is None:
+            config_file = try_find_config_in_flake(flake_path)
+            if config_file:
+                print(f"{DIM}  → detected config: {config_file}{RESET}", file=sys.stderr)
+                graph = extract_graph(config_file, args.max_depth)
+
+        # Strategy 3: fallback to option-based analysis
+        if graph is None:
+            print(f"{DIM}  → no config found, using option-based analysis{RESET}", file=sys.stderr)
             options_data, err = flake_options(args.flake)
             if err:
-                fatal(f"flake analysis: {err}")
-            nodes, edges = build_graph_from_flake_options(options_data)
-            graph = {"file": args.flake, "options": [], "imports": [], "cycle": False}
-            print(f"  options: {len(options_data)}", file=sys.stderr)
-            print(f"  declaration files: {len(nodes)}", file=sys.stderr)
+                fatal(f"flake analysis failed: {err}")
+            nodes, _ = build_graph_from_flake_options(options_data)
+            graph = {"file": f"flake:{host}", "options": [o.get("option","?") for o in options_data[:50]], "imports": [], "cycle": False}
+            print(f"{DIM}  → {len(options_data)} options, {len(nodes)} declaration files{RESET}", file=sys.stderr)
+
             if args.option:
                 for item in options_data:
                     if item["option"] == args.option:
                         option_info = item; break
-                if option_info:
-                    print(f"  '{args.option}' → {len(option_info.get('declarations',[]))} files", file=sys.stderr)
-                else:
-                    print(f"  '{args.option}' not found", file=sys.stderr)
 
+    # ── Determine output format ──
     fmt = None
     if args.output:
         ext = os.path.splitext(args.output)[1].lower()
@@ -436,27 +769,32 @@ def main():
     elif args.serve:
         fmt = "html"
 
+    # ── Render output ──
     if fmt == "text":
         for line in format_text(graph):
             print(line)
     elif fmt:
         write_output(graph, args.output, fmt, option_info)
     else:
-        for line in format_text(graph):
+        # Default: beautiful TUI
+        for line in format_summary(graph, flake_info, option_info):
             print(line)
+
+        if flake_info and not args.text:
+            hosts = parse_flake_nix_for_modules(os.path.abspath(parse_flake_uri(args.flake)[0]))
+            if hosts:
+                for line in format_flake_hosts(hosts):
+                    print(line)
+
+        for line in format_tui(graph):
+            print(line)
+
+        if option_info and "error" not in option_info:
+            for line in format_option_details(option_info):
+                print(line)
 
     if args.serve:
         start_server(graph, args.port, option_info)
-
-
-def build_graph_from_flake_options(options_data):
-    nodes = {}
-    for item in options_data:
-        for decl in item.get("declarations", []):
-            if decl not in nodes:
-                nodes[decl] = {"file": decl, "options": [], "cycle": False, "error": None}
-            nodes[decl]["options"].append(item["option"])
-    return nodes, []
 
 
 if __name__ == "__main__":
