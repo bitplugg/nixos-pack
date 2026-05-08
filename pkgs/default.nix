@@ -20,4 +20,5 @@
   nixos-clean = pkgs.callPackage ./nixos-clean { };
   nixos-log = pkgs.callPackage ./nixos-log { };
   nixos-top = pkgs.callPackage ./nixos-top { };
+  nyx = pkgs.callPackage ./nyx { };
 }

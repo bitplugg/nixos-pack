@@ -22,7 +22,8 @@
       nixos-clean = pkgs.callPackage ./pkgs/nixos-clean {};
       nixos-log = pkgs.callPackage ./pkgs/nixos-log {};
       nixos-top = pkgs.callPackage ./pkgs/nixos-top {};
-      default = self.packages.${system}.nixos-module-graph;
+      nyx = pkgs.callPackage ./pkgs/nyx {};
+      default = self.packages.${system}.nyx;
     };
 
     nixosModules = {
@@ -38,6 +39,7 @@
       nixos-top = import ./modules/nixos/nixos-top.nix;
       brrtfetch = import ./modules/nixos/brrtfetch.nix;
       rkn-block-checker = import ./modules/nixos/rkn-block-checker.nix;
+      nyx = import ./modules/nixos/nyx.nix;
     };
 
     homeManagerModules = {
@@ -53,6 +55,7 @@
       nixos-top = import ./modules/home/nixos-top.nix;
       brrtfetch = import ./modules/home/brrtfetch.nix;
       rkn-block-checker = import ./modules/home/rkn-block-checker.nix;
+      nyx = import ./modules/home/nyx.nix;
     };
 
     overlays.default = final: prev: {
@@ -68,6 +71,7 @@
       nixos-clean = final.callPackage ./pkgs/nixos-clean {};
       nixos-log = final.callPackage ./pkgs/nixos-log {};
       nixos-top = final.callPackage ./pkgs/nixos-top {};
+      nyx = final.callPackage ./pkgs/nyx {};
     };
   };
 }

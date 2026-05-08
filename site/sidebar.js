@@ -1,4 +1,5 @@
 var ARTICLES = [
+  { id: "nyx",                 en: "nyx",                 ru: "nyx" },
   { id: "nixos-module-graph", en: "nixos-module-graph", ru: "nixos-module-graph" },
   { id: "nixos-health",       en: "nixos-health",       ru: "nixos-health" },
   { id: "nixos-build-tui",    en: "nixos-build-tui",    ru: "nixos-build-tui" },
