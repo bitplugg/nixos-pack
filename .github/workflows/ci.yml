@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        package:
+          - brrtfetch
+          - rkn-block-checker
+          - nixos-module-graph
+          - nixos-health
+          - nix-diff-lock
+          - nixos-build-tui
+          - system-report
+          - nixos-flake-update
+          - nixos-switch-diff
+          - nixos-clean
+          - nixos-log
+          - nixos-top
+          - nyx
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@v4
+      - uses: DeterminateSystems/magic-nix-cache-action@v2
+      - run: nix build .#${{ matrix.package }} --no-link

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import json
 import os
 import shutil
 import stat
@@ -41,6 +42,17 @@ PLUGIN_DIRS = [
     "/etc/nyx/plugins",
 ]
 
+DEMO_NYX = """\
+# description: List Nix store paths sorted by size
+# version: 0.1.0
+# author: nyx
+import os, subprocess, sys
+r = subprocess.run(["du", "-sh", "/nix/store/*"], shell=True, capture_output=True, text=True)
+lines = sorted(r.stdout.strip().split("\\n"), key=lambda x: x.split("\\t")[0] if x else "")
+for l in lines[-20:]:
+    print(l)
+"""
+
 
 def find_plugins():
     plugins = {}
@@ -52,7 +64,7 @@ def find_plugins():
                 if not f.endswith(".nyx"):
                     continue
                 path = os.path.join(d, f)
-                name = f[:-4]
+                name = os.path.splitext(f)[0]
                 meta = read_plugin_meta(path)
                 plugins[name] = {"path": path, "meta": meta}
         except PermissionError:
@@ -66,17 +78,14 @@ def read_plugin_meta(path):
         with open(path, encoding="utf-8", errors="replace") as f:
             for line in f:
                 line = line.strip()
-                if line.startswith("# name:"):
-                    pass
-                elif line.startswith("# description:"):
+                if line.startswith("# description:"):
                     meta["description"] = line[len("# description:"):].strip()
                 elif line.startswith("# version:"):
                     meta["version"] = line[len("# version:"):].strip()
                 elif line.startswith("# author:"):
                     meta["author"] = line[len("# author:"):].strip()
-                elif meta["description"] or meta["version"] or meta["author"]:
-                    if not line.startswith("#"):
-                        break
+                elif not line.startswith("#"):
+                    break
     except Exception:
         pass
     return meta
@@ -87,32 +96,140 @@ def show_help(plugins):
     print()
     print(f"  {DIM}usage:{RESET} nyx <command> [args...]")
     print()
-
-    cmds = {}
-    for name in BUILTIN:
-        cmds[name] = ("builtin", BUILTIN[name])
-    for name, info in plugins.items():
-        cmds[name] = ("plugin", info)
-
-    print(f"  {BOLD}commands{RESET}")
-    for name in sorted(cmds):
-        kind, info = cmds[name]
+    print(f"  {BOLD}built-in commands{RESET}")
+    for name in sorted(BUILTIN):
         alias_str = ""
         for a, t in sorted(ALIASES.items()):
             if t == name:
                 alias_str += f" {DIM}({a}){RESET}"
-        if kind == "builtin":
-            desc = f"  {DIM}→ {info}{RESET}"
-            print(f"    {GREEN}{name}{RESET}{alias_str}{desc}")
-        else:
-            d = info["meta"]["description"]
+        print(f"    {GREEN}{name}{RESET}{alias_str}  {DIM}→ {BUILTIN[name]}{RESET}")
+    print()
+    print(f"  {BOLD}meta commands{RESET}")
+    print(f"    {CYAN}doctor{RESET}    {DIM}system & plugin health check{RESET}")
+    print(f"    {CYAN}install{RESET}   {DIM}install a nixos-pack package{RESET}")
+    print(f"    {CYAN}plugins{RESET}   {DIM}list available .nyx plugins{RESET}")
+    print(f"    {CYAN}init{RESET}      {DIM}scaffold a new .nyx plugin{RESET}")
+    print()
+    if plugins:
+        print(f"  {BOLD}plugins ({len(plugins)}){RESET}")
+        for name in sorted(plugins):
+            d = plugins[name]["meta"]["description"]
             desc = f"  {DIM}{d}{RESET}" if d else ""
-            print(f"    {YELLOW}{name}{RESET}{alias_str}{desc}")
+            print(f"    {YELLOW}{name}{RESET}{desc}")
+        print()
+    print(f"  {DIM}nyx doctor   — full system check{RESET}")
+    print(f"  {DIM}nyx install  — install packages{RESET}")
+    print()
 
-    print()
-    print(f"  {DIM}plugins:{RESET} {len(plugins)} loaded")
-    print(f"  {DIM}nyx --help{RESET}  show this")
-    print()
+
+def cmd_doctor(plugins):
+    print(f"{BOLD}nyx doctor{RESET}\n")
+    ok = 0
+    fail = 0
+
+    # nix version
+    try:
+        r = subprocess.run(["nix", "--version"], capture_output=True, text=True, timeout=5)
+        if r.returncode == 0:
+            print(f"  {GREEN}✓{RESET} nix  {DIM}{r.stdout.strip()}{RESET}")
+            ok += 1
+        else:
+            print(f"  {RED}✗{RESET} nix not found")
+            fail += 1
+    except Exception:
+        print(f"  {RED}✗{RESET} nix not found")
+        fail += 1
+
+    # nixos-version
+    try:
+        r = subprocess.run(["nixos-version"], capture_output=True, text=True, timeout=5)
+        if r.returncode == 0:
+            print(f"  {GREEN}✓{RESET} NixOS  {DIM}{r.stdout.strip()}{RESET}")
+            ok += 1
+        else:
+            print(f"  {YELLOW}⚠{RESET} not NixOS")
+            ok += 1
+    except Exception:
+        print(f"  {YELLOW}⚠{RESET} not NixOS (nixos-version not found)")
+        ok += 1
+
+    # installed packages
+    for alias, pkg in sorted(BUILTIN.items()):
+        found = shutil.which(pkg)
+        if found:
+            print(f"  {GREEN}✓{RESET} {pkg}")
+            ok += 1
+        else:
+            print(f"  {DIM}·{RESET} {pkg} {DIM}(not installed){RESET}")
+
+    # plugins
+    pc = len(plugins)
+    print(f"  {GREEN}✓{RESET} {pc} plugin{'s' if pc != 1 else ''} loaded")
+    ok += 1
+
+    print(f"\n  {DIM}{ok} ok, {fail} fail{RESET}")
+
+
+def cmd_install(args):
+    if not args:
+        print(f"{BOLD}usage:{RESET} nyx install <package>")
+        print(f"  {DIM}packages: {', '.join(sorted(BUILTIN.values()))}{RESET}")
+        return
+
+    target = args[0]
+    if target in BUILTIN:
+        target = BUILTIN[target]
+    elif target in ALIASES:
+        target = BUILTIN[ALIASES[target]]
+
+    pkg_map = {v: k for k, v in BUILTIN.items()}
+    if target not in pkg_map and target not in BUILTIN.values():
+        print(f"{RED}unknown package:{RESET} {target}")
+        print(f"  {DIM}available: {', '.join(sorted(BUILTIN.values()))}{RESET}")
+        return
+
+    url = f"github:bitplugg/nixos-pack#{target}"
+    print(f"{CYAN}→{RESET} installing {BOLD}{target}{RESET} from {DIM}{url}{RESET}")
+    r = subprocess.run(["nix", "profile", "install", url])
+    if r.returncode == 0:
+        print(f"{GREEN}✓{RESET} {target} installed")
+        print(f"  {DIM}run 'nyx {pkg_map.get(target, target)}' to use it{RESET}")
+    else:
+        print(f"{RED}✖{RESET} installation failed")
+
+
+def cmd_plugins(plugins):
+    if not plugins:
+        print(f"{YELLOW}no plugins found{RESET}")
+        print(f"  {DIM}put .nyx files in ~/.config/nyx/plugins/{RESET}")
+        print(f"  {DIM}or run 'nyx init' to create one{RESET}")
+        return
+    print(f"{BOLD}{len(plugins)} plugin{'s' if len(plugins) != 1 else ''} loaded{RESET}\n")
+    for name in sorted(plugins):
+        info = plugins[name]
+        m = info["meta"]
+        loc = info["path"]
+        desc = m["description"] or "(no description)"
+        ver = f" v{m['version']}" if m["version"] else ""
+        print(f"  {YELLOW}{name}{RESET}{ver}")
+        print(f"    {DIM}{desc}{RESET}")
+        print(f"    {DIM}{loc}{RESET}")
+        print()
+
+
+def cmd_init():
+    d = os.path.expanduser("~/.config/nyx/plugins")
+    os.makedirs(d, exist_ok=True)
+    path = os.path.join(d, "myplugin.nyx")
+    if os.path.exists(path):
+        print(f"{YELLOW} already exists:{RESET} {path}")
+        return
+    with open(path, "w") as f:
+        f.write(DEMO_NYX)
+    os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR |
+             stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+    print(f"{GREEN}✓{RESET} created {path}")
+    print(f"  {DIM}edit it, then run 'nyx myplugin'{RESET}")
 
 
 def run_nyx_file(path, args):
@@ -138,6 +255,18 @@ def main():
     if cmd in ("--version", "-v"):
         print(f"nyx {VERSION}")
         return
+    if cmd == "doctor":
+        cmd_doctor(plugins)
+        return
+    if cmd == "install":
+        cmd_install(args)
+        return
+    if cmd == "plugins":
+        cmd_plugins(plugins)
+        return
+    if cmd == "init":
+        cmd_init()
+        return
 
     if cmd in ALIASES:
         cmd = ALIASES[cmd]
@@ -146,7 +275,7 @@ def main():
         target = BUILTIN[cmd]
         target_cmd = shutil.which(target)
         if not target_cmd:
-            print(f"{RED}error:{RESET} '{target}' not found — install the package or add it to PATH")
+            print(f"{RED}error:{RESET} '{target}' not found — install it via 'nyx install {cmd}'")
             sys.exit(1)
         os.execvp(target_cmd, [target_cmd] + args)
 
@@ -154,7 +283,6 @@ def main():
         run_nyx_file(plugins[cmd]["path"], args)
 
     print(f"{RED}unknown command:{RESET} {cmd}")
-    print(f"  {DIM}run 'nyx --help' for available commands{RESET}")
     sys.exit(1)
 
 

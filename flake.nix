@@ -40,6 +40,7 @@
       brrtfetch = import ./modules/nixos/brrtfetch.nix;
       rkn-block-checker = import ./modules/nixos/rkn-block-checker.nix;
       nyx = import ./modules/nixos/nyx.nix;
+      all = import ./modules/nixos/all.nix;
     };
 
     homeManagerModules = {
@@ -56,6 +57,7 @@
       brrtfetch = import ./modules/home/brrtfetch.nix;
       rkn-block-checker = import ./modules/home/rkn-block-checker.nix;
       nyx = import ./modules/home/nyx.nix;
+      all = import ./modules/home/all.nix;
     };
 
     overlays.default = final: prev: {

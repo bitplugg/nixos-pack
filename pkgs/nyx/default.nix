@@ -1,4 +1,4 @@
-{ lib, stdenv, python3, makeWrapper }:
+{ lib, stdenv, python3 }:
 
 stdenv.mkDerivation {
   pname = "nyx";
@@ -6,7 +6,7 @@ stdenv.mkDerivation {
 
   src = ./.;
 
-  nativeBuildInputs = [ makeWrapper ];
+  buildInputs = [ python3 ];
 
   dontBuild = true;
 
@@ -14,15 +14,21 @@ stdenv.mkDerivation {
     mkdir -p $out/bin
     cp nyx $out/bin/nyx
     chmod +x $out/bin/nyx
+
+    mkdir -p $out/share/nyx
+    cp -r examples $out/share/nyx/examples
+    cp -r completions $out/share/nyx/completions
   '';
 
   meta = with lib; {
     description = "Plugin-based NixOS toolkit — zero alone, infinite with plugins";
     longDescription = ''
       nyx is a unified command interface for NixOS diagnostic and utility
-      tools. By itself it does nothing — it discovers installed tools
-      (nixos-health, nixos-module-graph, etc.) and exposes them as subcommands.
-      Install any nixos-pack tool and nyx finds it automatically.
+      tools. It discovers .nyx plugins in ~/.config/nyx/plugins/ and /etc/nyx/plugins/,
+      and wraps installed nixos-pack tools as subcommands.
+
+      Built-in commands: doctor, install, init, plugins.
+      See example plugins in $out/share/nyx/examples/.
     '';
     homepage = "https://github.com/bitplugg/nixos-pack";
     license = licenses.mit;

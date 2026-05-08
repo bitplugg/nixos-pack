@@ -1,0 +1,8 @@
+#!/usr/bin/env python3
+# description: Count installed nix packages
+# version: 0.1.0
+# author: nyx
+import subprocess, sys
+r = subprocess.run(["nix-env", "-q"], capture_output=True, text=True)
+count = len(r.stdout.strip().split("\n")) if r.stdout.strip() else 0
+print(f"installed packages: {count}")

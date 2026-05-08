@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# description: Show disk usage overview
+# version: 0.1.0
+# author: nyx
+echo "── Disk usage ──"
+df -h / /nix /home 2>/dev/null | awk 'NR>1 {print $1, $3, $4, $5}'

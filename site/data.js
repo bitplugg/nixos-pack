@@ -40,9 +40,26 @@ var ARTICLES = [
 art("en", "nyx", "nyx", `
 <p><strong>nyx</strong> — plugin-based NixOS toolkit. Zero alone, infinite with plugins.</p>
 <p>Installed tools are exposed as subcommands. Any <code>.nyx</code> file in <code>~/.config/nyx/plugins/</code> becomes a command.</p>
+
+<h2>Usage</h2>
 <pre>nyx           # show available commands
+nyx doctor    # system health check
+nyx install   # install a nixos-pack package
+nyx init      # scaffold a new .nyx plugin
+nyx plugins   # list loaded plugins
 nyx health    # run nixos-health
 nyx graph     # run nixos-module-graph</pre>
+
+<h2>Meta commands</h2>
+<table>
+  <tr><th>Command</th><th>Description</th></tr>
+  <tr><td><code>doctor</code></td><td>Check nix version, installed packages, plugin status</td></tr>
+  <tr><td><code>install</code></td><td>Install a nixos-pack package via <code>nix profile install</code> (<code>nyx install top</code>)</td></tr>
+  <tr><td><code>init</code></td><td>Create a starter <code>~/.config/nyx/plugins/myplugin.nyx</code></td></tr>
+  <tr><td><code>plugins</code></td><td>List all loaded .nyx plugins with metadata</td></tr>
+</table>
+
+<h2>Built-in tool commands</h2>
 <table>
   <tr><th>Command</th><th>Alias</th><th>Runs</th></tr>
   <tr><td><code>health</code></td><td><code>h</code></td><td>nixos-health</td></tr>
@@ -58,6 +75,33 @@ nyx graph     # run nixos-module-graph</pre>
   <tr><td><code>brrt</code></td><td></td><td>brrtfetch</td></tr>
   <tr><td><code>rkn</code></td><td></td><td>rkn-block-checker</td></tr>
 </table>
+
+<h2>.nyx plugin format</h2>
+<p>Any executable file with <code>.nyx</code> extension in <code>~/.config/nyx/plugins/</code> becomes a <code>nyx &lt;name&gt;</code> command. Metadata is read from comment headers:</p>
+<pre>#!/usr/bin/env python3
+# description: What my plugin does
+# version: 0.1.0
+# author: me
+import sys
+print("hello from nyx plugin")</pre>
+<p>Examples are installed at <code>$(dirname $(which nyx))/../share/nyx/examples/</code>.</p>
+<h3>Bash example</h3>
+<pre>#!/usr/bin/env bash
+# description: Check disk usage
+echo "Disk usage:"
+df -h / /nix</pre>
+<h3>Python example</h3>
+<pre>#!/usr/bin/env python3
+# description: Count installed packages
+import subprocess
+r = subprocess.run(["nix-env", "-q"], capture_output=True, text=True)
+print(f"packages: {len(r.stdout.split())}")</pre>
+
+<h2>Autocompletion</h2>
+<p>Source the completion scripts:</p>
+<pre>source $(dirname $(which nyx))/../share/nyx/completions/nyx.bash   # bash
+source $(dirname $(which nyx))/../share/nyx/completions/nyx.zsh    # zsh</pre>
+
 <h2>NixOS module</h2>
 <pre>nixos-pack.nixosModules.nyx</pre>
 <h2>Home-Manager module</h2>
@@ -270,9 +314,25 @@ rkn-block-checker --json example.com</pre>
 art("ru", "nyx", "nyx", `
 <p><strong>nyx</strong> — плагинный NixOS тулкит. Ноль без плагинов, бесконечен с ними.</p>
 <p>Установленные утилиты становятся подкомандами. Любой <code>.nyx</code> файл в <code>~/.config/nyx/plugins/</code> становится командой.</p>
+
+<h2>Использование</h2>
 <pre>nyx           # показать команды
-nyx health    # запустить nixos-health
-nyx graph     # запустить nixos-module-graph</pre>
+nyx doctor    # проверка системы
+nyx install   # установка пакета
+nyx init      # создать .nyx плагин
+nyx plugins   # список плагинов
+nyx health    # запустить nixos-health</pre>
+
+<h2>Мета-команды</h2>
+<table>
+  <tr><th>Команда</th><th>Описание</th></tr>
+  <tr><td><code>doctor</code></td><td>Проверка nix, установленных пакетов, плагинов</td></tr>
+  <tr><td><code>install</code></td><td>Установить пакет из nixos-pack (<code>nyx install top</code>)</td></tr>
+  <tr><td><code>init</code></td><td>Создать шаблон <code>~/.config/nyx/plugins/myplugin.nyx</code></td></tr>
+  <tr><td><code>plugins</code></td><td>Список загруженных .nyx плагинов</td></tr>
+</table>
+
+<h2>Встроенные команды</h2>
 <table>
   <tr><th>Команда</th><th>Псевдоним</th><th>Запускает</th></tr>
   <tr><td><code>health</code></td><td><code>h</code></td><td>nixos-health</td></tr>
@@ -288,6 +348,31 @@ nyx graph     # запустить nixos-module-graph</pre>
   <tr><td><code>brrt</code></td><td></td><td>brrtfetch</td></tr>
   <tr><td><code>rkn</code></td><td></td><td>rkn-block-checker</td></tr>
 </table>
+
+<h2>Формат .nyx плагинов</h2>
+<p>Любой исполняемый файл с расширением <code>.nyx</code> в <code>~/.config/nyx/plugins/</code> становится командой <code>nyx &lt;имя&gt;</code>. Метаданные читаются из комментариев в заголовке:</p>
+<pre>#!/usr/bin/env python3
+# description: Что делает плагин
+# version: 0.1.0
+# author: я
+print("привет от nyx плагина")</pre>
+
+<h3>Пример на bash</h3>
+<pre>#!/usr/bin/env bash
+# description: Проверка дисков
+df -h / /nix</pre>
+
+<h3>Пример на Python</h3>
+<pre>#!/usr/bin/env python3
+# description: Считает установленные пакеты
+import subprocess
+r = subprocess.run(["nix-env", "-q"], capture_output=True, text=True)
+print(f"пакетов: {len(r.stdout.split())}")</pre>
+
+<h2>Автодополнение</h2>
+<pre>source $(dirname $(which nyx))/../share/nyx/completions/nyx.bash   # bash
+source $(dirname $(which nyx))/../share/nyx/completions/nyx.zsh    # zsh</pre>
+
 <h2>Модуль NixOS</h2>
 <pre>nixos-pack.nixosModules.nyx</pre>
 <h2>Модуль Home-Manager</h2>
