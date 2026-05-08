@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nixos-build-tui — nixos-pack</title>
+<link rel="stylesheet" href="../site.css">
+<nav class="top"><a href="../index.html">← back</a> / nixos-build-tui</nav>
+<h1>nixos-build-tui</h1>
+<p class="subtitle">Minimal TUI wrapper around nixos-rebuild</p>
+
+<h2>Description</h2>
+<p>Interactive terminal UI for <code>nixos-rebuild</code>. Provides action selection,
+build log streaming, rollback shortcut, and boot-entry management.</p>
+
+<h2>Usage</h2>
+<pre>nixos-build-tui</pre>
+
+<h2>Features</h2>
+<ul>
+  <li>Select build action (switch, boot, test, dry-activate)</li>
+  <li>Live build log output</li>
+  <li>Quick rollback to previous generation</li>
+  <li>Boot entry management</li>
+</ul>
+
+<h2>NixOS module</h2>
+<pre>nixos-pack.nixosModules.nixos-build-tui</pre>
+
+<h2>Home-Manager module</h2>
+<pre>nixos-pack.homeManagerModules.nixos-build-tui</pre>
+</html>

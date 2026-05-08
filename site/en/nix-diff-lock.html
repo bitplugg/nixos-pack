@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nix-diff-lock — nixos-pack</title>
+<link rel="stylesheet" href="../site.css">
+<nav class="top"><a href="../index.html">← back</a> / nix-diff-lock</nav>
+<h1>nix-diff-lock</h1>
+<p class="subtitle">Human-readable diff for flake.lock files</p>
+
+<h2>Description</h2>
+<p>Compares two <code>flake.lock</code> files and shows what inputs changed,
+what commits came in, how many packages were added or removed,
+and which dependencies were updated.</p>
+
+<h2>Usage</h2>
+<pre>nix-diff-lock old.lock new.lock
+nix-diff-lock --json before.lock after.lock</pre>
+
+<h2>Output</h2>
+<ul>
+  <li>Added inputs (green)</li>
+  <li>Removed inputs (red)</li>
+  <li>Updated inputs with old → new revisions</li>
+  <li>Summary of changed packages</li>
+</ul>
+
+<h2>NixOS module</h2>
+<pre>nixos-pack.nixosModules.nix-diff-lock</pre>
+
+<h2>Home-Manager module</h2>
+<pre>nixos-pack.homeManagerModules.nix-diff-lock</pre>
+</html>

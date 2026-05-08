@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nixos-clean — nixos-pack</title>
+<link rel="stylesheet" href="../site.css">
+<nav class="top"><a href="../index.html">← назад</a> / nixos-clean</nav>
+<h1>nixos-clean</h1>
+<p class="subtitle">GC Nix store с обзором поколений</p>
+
+<h2>Описание</h2>
+<p>Показывает обзор всех системных поколений и текущий размер store,
+затем запускает сборку мусора. Поддерживает режимы dry-run и полной
+(исторической) очистки.</p>
+
+<h2>Использование</h2>
+<pre>nixos-clean
+nixos-clean --dry-run
+nixos-clean --full</pre>
+
+<h2>Флаги</h2>
+<table>
+  <tr><th>Флаг</th><th>Описание</th></tr>
+  <tr><td><code>--dry-run</code></td><td>Показать сколько освободится без удаления</td></tr>
+  <tr><td><code>--full</code></td><td>Полная очистка (включая старые поколения)</td></tr>
+  <tr><td><code>--help</code></td><td>Помощь</td></tr>
+</table>
+
+<h2>Модуль NixOS</h2>
+<pre>nixos-pack.nixosModules.nixos-clean</pre>
+
+<h2>Модуль Home-Manager</h2>
+<pre>nixos-pack.homeManagerModules.nixos-clean</pre>
+</html>

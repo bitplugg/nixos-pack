@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nixos-module-graph — nixos-pack</title>
+<link rel="stylesheet" href="../site.css">
+<nav class="top"><a href="../index.html">← назад</a> / nixos-module-graph</nav>
+<h1>nixos-module-graph</h1>
+<p class="subtitle">Анализ структуры импортов модулей NixOS</p>
+
+<h2>Описание</h2>
+<p>Обходит дерево <code>imports = [...]</code> NixOS модуля и строит граф зависимостей.
+Поддерживает HTML (d3.js), DOT, JSON и текстовый вывод.</p>
+
+<h2>Использование</h2>
+<pre>nixos-module-graph --config /etc/nixos/configuration.nix
+nixos-module-graph --config ./configuration.nix --output graph.html
+nixos-module-graph --config ./configuration.nix --serve --port 8080
+nixos-module-graph --config ./configuration.nix --text
+nixos-module-graph --config ./configuration.nix --option services.nginx.enable
+nixos-module-graph --flake .#my-server --output graph.html</pre>
+
+<h2>Флаги</h2>
+<table>
+  <tr><th>Флаг</th><th>Описание</th></tr>
+  <tr><td><code>--config</code></td><td>Путь к configuration.nix</td></tr>
+  <tr><td><code>--flake</code></td><td>Flake URI (например <code>.#hostname</code>)</td></tr>
+  <tr><td><code>--option</code></td><td>Анализ конкретной опции</td></tr>
+  <tr><td><code>--output</code></td><td>Запись в файл (.html / .dot / .json)</td></tr>
+  <tr><td><code>--text</code></td><td>ASCII дерево в терминал</td></tr>
+  <tr><td><code>--serve</code></td><td>Запуск интерактивного d3.js сервера</td></tr>
+  <tr><td><code>--port</code></td><td>Порт для <code>--serve</code> (по умолчанию 8080)</td></tr>
+  <tr><td><code>--max-depth</code></td><td>Лимит глубины рекурсии импортов</td></tr>
+</table>
+
+<h2>Форматы вывода</h2>
+<ul>
+  <li><strong>HTML</strong> — интерактивный граф с d3.js (зум, панорамирование, клик)</li>
+  <li><strong>DOT</strong> — формат Graphviz (<code>dot -Tpng graph.dot -o graph.png</code>)</li>
+  <li><strong>JSON</strong> — машиночитаемые узлы, рёбра, информация об опциях</li>
+  <li><strong>Text</strong> — цветное ASCII дерево в терминале</li>
+</ul>
+
+<h2>Модуль NixOS</h2>
+<pre>nixos-pack.nixosModules.nixos-module-graph</pre>
+
+<h2>Модуль Home-Manager</h2>
+<pre>nixos-pack.homeManagerModules.nixos-module-graph</pre>
+</html>

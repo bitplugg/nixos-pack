@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>brrtfetch — nixos-pack</title>
+<link rel="stylesheet" href="../site.css">
+<nav class="top"><a href="../index.html">← back</a> / brrtfetch</nav>
+<h1>brrtfetch</h1>
+<p class="subtitle">Animated ASCII art from GIF</p>
+
+<h2>Description</h2>
+<p>Converts a GIF into smooth ANSI animations rendered in the terminal.
+Integrates with <code>neofetch</code>, <code>fastfetch</code>, or any sysinfo fetcher
+that supports image/ASCII backends.</p>
+
+<h2>Usage</h2>
+<pre>brrtfetch --gif dance.gif
+brrtfetch --gif dance.gif --fetch fastfetch
+brrtfetch --list-frames dance.gif</pre>
+
+<h2>Options</h2>
+<table>
+  <tr><th>Flag</th><th>Description</th></tr>
+  <tr><td><code>--gif</code></td><td>Path to GIF file</td></tr>
+  <tr><td><code>--fetch</code></td><td>Sysinfo fetcher to pipe to (neofetch, fastfetch)</td></tr>
+  <tr><td><code>--list-frames</code></td><td>Extract and show all frames as text</td></tr>
+  <tr><td><code>--fps</code></td><td>Animation speed in frames per second</td></tr>
+</table>
+
+<h2>NixOS module</h2>
+<pre>nixos-pack.nixosModules.brrtfetch</pre>
+
+<h2>Home-Manager module</h2>
+<pre>nixos-pack.homeManagerModules.brrtfetch</pre>
+</html>

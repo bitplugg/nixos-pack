@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nixos-flake-update — nixos-pack</title>
+<link rel="stylesheet" href="../site.css">
+<nav class="top"><a href="../index.html">← back</a> / nixos-flake-update</nav>
+<h1>nixos-flake-update</h1>
+<p class="subtitle">TUI for selectively updating flake inputs</p>
+
+<h2>Description</h2>
+<p>Interactive TUI that reads your <code>flake.nix</code> inputs, shows current
+locked revisions from <code>flake.lock</code>, and lets you pick which inputs
+to update — or update all at once.</p>
+
+<h2>Usage</h2>
+<pre>nixos-flake-update</pre>
+
+<h2>Controls</h2>
+<table>
+  <tr><th>Key</th><th>Action</th></tr>
+  <tr><td><code>1-9</code></td><td>Update specific input by number</td></tr>
+  <tr><td><code>a</code></td><td>Update all inputs</td></tr>
+  <tr><td><code>q</code></td><td>Quit</td></tr>
+</table>
+
+<h2>NixOS module</h2>
+<pre>nixos-pack.nixosModules.nixos-flake-update</pre>
+
+<h2>Home-Manager module</h2>
+<pre>nixos-pack.homeManagerModules.nixos-flake-update</pre>
+</html>

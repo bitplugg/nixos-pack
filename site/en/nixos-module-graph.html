@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nixos-module-graph — nixos-pack</title>
+<link rel="stylesheet" href="../site.css">
+<nav class="top"><a href="../index.html">← back</a> / nixos-module-graph</nav>
+<h1>nixos-module-graph</h1>
+<p class="subtitle">Analyse NixOS module imports as a visual graph</p>
+
+<h2>Description</h2>
+<p>Walks the <code>imports = [...]</code> tree of a NixOS module and builds a dependency graph.
+Supports HTML (d3.js), DOT, JSON, and ASCII text output.</p>
+
+<h2>Usage</h2>
+<pre>nixos-module-graph --config /etc/nixos/configuration.nix
+nixos-module-graph --config ./configuration.nix --output graph.html
+nixos-module-graph --config ./configuration.nix --serve --port 8080
+nixos-module-graph --config ./configuration.nix --text
+nixos-module-graph --config ./configuration.nix --option services.nginx.enable
+nixos-module-graph --flake .#my-server --output graph.html</pre>
+
+<h2>Options</h2>
+<table>
+  <tr><th>Flag</th><th>Description</th></tr>
+  <tr><td><code>--config</code></td><td>Path to a NixOS configuration.nix</td></tr>
+  <tr><td><code>--flake</code></td><td>Flake URI (e.g. <code>.#hostname</code>)</td></tr>
+  <tr><td><code>--option</code></td><td>Analyse a specific option declaration/definition</td></tr>
+  <tr><td><code>--output</code></td><td>Write to file (.html / .dot / .json)</td></tr>
+  <tr><td><code>--text</code></td><td>ASCII tree in terminal</td></tr>
+  <tr><td><code>--serve</code></td><td>Start interactive d3.js web server</td></tr>
+  <tr><td><code>--port</code></td><td>Port for <code>--serve</code> (default 8080)</td></tr>
+  <tr><td><code>--max-depth</code></td><td>Limit import recursion depth</td></tr>
+</table>
+
+<h2>Output formats</h2>
+<ul>
+  <li><strong>HTML</strong> — interactive force-directed graph with d3.js (zoom, pan, click)</li>
+  <li><strong>DOT</strong> — Graphviz format (<code>dot -Tpng graph.dot -o graph.png</code>)</li>
+  <li><strong>JSON</strong> — machine-readable nodes, edges, option info</li>
+  <li><strong>Text</strong> — coloured ASCII tree in terminal</li>
+</ul>
+
+<h2>NixOS module</h2>
+<pre>nixos-pack.nixosModules.nixos-module-graph</pre>
+
+<h2>Home-Manager module</h2>
+<pre>nixos-pack.homeManagerModules.nixos-module-graph</pre>
+</html>

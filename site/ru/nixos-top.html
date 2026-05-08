@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nixos-top — nixos-pack</title>
+<link rel="stylesheet" href="../site.css">
+<nav class="top"><a href="../index.html">← назад</a> / nixos-top</nav>
+<h1>nixos-top</h1>
+<p class="subtitle">Монитор системы в реальном времени</p>
+
+<h2>Описание</h2>
+<p>Дашборд с обновлением в реальном времени: средняя нагрузка,
+использование памяти, топ systemd юнитов по CPU,
+последние ошибки journald. Обновляется каждые 2 секунды.</p>
+
+<h2>Использование</h2>
+<pre>nixos-top
+nixos-top -n 5</pre>
+
+<h2>Флаги</h2>
+<table>
+  <tr><th>Флаг</th><th>Описание</th></tr>
+  <tr><td><code>-n</code></td><td>Интервал обновления в секундах (по умолчанию 2)</td></tr>
+</table>
+
+<h2>Модуль NixOS</h2>
+<pre>nixos-pack.nixosModules.nixos-top</pre>
+
+<h2>Модуль Home-Manager</h2>
+<pre>nixos-pack.homeManagerModules.nixos-top</pre>
+</html>

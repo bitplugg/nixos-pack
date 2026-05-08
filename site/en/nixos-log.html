@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nixos-log — nixos-pack</title>
+<link rel="stylesheet" href="../site.css">
+<nav class="top"><a href="../index.html">← back</a> / nixos-log</nav>
+<h1>nixos-log</h1>
+<p class="subtitle">Journalctl browser with coloured output</p>
+
+<h2>Description</h2>
+<p>Wraps <code>journalctl</code> with syntax highlighting:
+errors and failures in red, warnings in yellow, service starts in green.
+Passes all flags through to journalctl.</p>
+
+<h2>Usage</h2>
+<pre>nixos-log
+nixos-log -u nginx --follow
+nixos-log --boot -1 --priority err
+nixos-log -p 5 -n 100</pre>
+
+<h2>NixOS module</h2>
+<pre>nixos-pack.nixosModules.nixos-log</pre>
+
+<h2>Home-Manager module</h2>
+<pre>nixos-pack.homeManagerModules.nixos-log</pre>
+</html>

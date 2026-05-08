@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nixos-flake-update — nixos-pack</title>
+<link rel="stylesheet" href="../site.css">
+<nav class="top"><a href="../index.html">← назад</a> / nixos-flake-update</nav>
+<h1>nixos-flake-update</h1>
+<p class="subtitle">TUI для выборочного обновления входов flake</p>
+
+<h2>Описание</h2>
+<p>Интерактивный TUI читает ваш <code>flake.nix</code>, показывает текущие
+зафиксированные ревизии из <code>flake.lock</code>, и позволяет выбрать
+какие входы обновить — или все сразу.</p>
+
+<h2>Использование</h2>
+<pre>nixos-flake-update</pre>
+
+<h2>Управление</h2>
+<table>
+  <tr><th>Клавиша</th><th>Действие</th></tr>
+  <tr><td><code>1-9</code></td><td>Обновить конкретный вход по номеру</td></tr>
+  <tr><td><code>a</code></td><td>Обновить все входы</td></tr>
+  <tr><td><code>q</code></td><td>Выйти</td></tr>
+</table>
+
+<h2>Модуль NixOS</h2>
+<pre>nixos-pack.nixosModules.nixos-flake-update</pre>
+
+<h2>Модуль Home-Manager</h2>
+<pre>nixos-pack.homeManagerModules.nixos-flake-update</pre>
+</html>

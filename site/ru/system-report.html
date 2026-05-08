@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>system-report — nixos-pack</title>
+<link rel="stylesheet" href="../site.css">
+<nav class="top"><a href="../index.html">← назад</a> / system-report</nav>
+<h1>system-report</h1>
+<p class="subtitle">JSON инвентаризация системы</p>
+
+<h2>Описание</h2>
+<p>Собирает информацию о системе в единый JSON документ:
+установленные пакеты, активные systemd юниты, открытые порты,
+точки монтирования, параметры ядра и информацию о железе.</p>
+
+<h2>Использование</h2>
+<pre>system-report
+system-report --output report.json
+system-report --pretty</pre>
+
+<h2>Секции вывода</h2>
+<table>
+  <tr><th>Секция</th><th>Описание</th></tr>
+  <tr><td>packages</td><td>Список установленных Nix пакетов с версиями</td></tr>
+  <tr><td>services</td><td>Включённые и активные systemd юниты</td></tr>
+  <tr><td>ports</td><td>Слушающие TCP/UDP порты</td></tr>
+  <tr><td>mounts</td><td>Точки монтирования и использование</td></tr>
+  <tr><td>kernel</td><td>Версия и параметры ядра</td></tr>
+  <tr><td>hardware</td><td>CPU, память, диски</td></tr>
+</table>
+
+<h2>Модуль NixOS</h2>
+<pre>nixos-pack.nixosModules.system-report</pre>
+
+<h2>Модуль Home-Manager</h2>
+<pre>nixos-pack.homeManagerModules.system-report</pre>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nix-diff-lock — nixos-pack</title>
+<link rel="stylesheet" href="../site.css">
+<nav class="top"><a href="../index.html">← назад</a> / nix-diff-lock</nav>
+<h1>nix-diff-lock</h1>
+<p class="subtitle">Человекочитаемый diff для flake.lock</p>
+
+<h2>Описание</h2>
+<p>Сравнивает два <code>flake.lock</code> файла и показывает какие входы изменились,
+какие коммиты пришли, сколько пакетов добавлено или удалено.</p>
+
+<h2>Использование</h2>
+<pre>nix-diff-lock old.lock new.lock
+nix-diff-lock --json before.lock after.lock</pre>
+
+<h2>Вывод</h2>
+<ul>
+  <li>Добавленные входы (зелёным)</li>
+  <li>Удалённые входы (красным)</li>
+  <li>Обновлённые входы: старый → новый ревизии</li>
+  <li>Сводка изменений</li>
+</ul>
+
+<h2>Модуль NixOS</h2>
+<pre>nixos-pack.nixosModules.nix-diff-lock</pre>
+
+<h2>Модуль Home-Manager</h2>
+<pre>nixos-pack.homeManagerModules.nix-diff-lock</pre>
+</html>
