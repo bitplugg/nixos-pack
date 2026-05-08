@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# description: Build VM test
+# version: 0.1.0
+# author: bitplugg
+echo "Building VM test..."
+nixos-rebuild build-vm 2>&1 | tail -20

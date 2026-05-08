@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# description: Capture network packets
+# version: 0.1.0
+# author: bitplugg
+iface="${1:-eth0}"
+count="${2:-10}"
+echo "Capturing $count packets on $iface..."
+sudo tcpdump -i "$iface" -c "$count" -nn 2>/dev/null || echo "tcpdump failed"

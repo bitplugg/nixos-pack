@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# description: Copy stdin to clipboard
+# version: 0.1.0
+# author: bitplugg
+if [ -t 0 ]; then
+  echo "Usage: echo text | clipboard"
+  exit 1
+fi
+xclip -selection clipboard 2>/dev/null || wl-copy 2>/dev/null || echo "no clipboard tool"

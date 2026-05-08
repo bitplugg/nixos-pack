@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show inode usage
+# version: 0.1.0
+# author: bitplugg
+df -i 2>/dev/null | grep -v overlay | head -10 || echo "no df"

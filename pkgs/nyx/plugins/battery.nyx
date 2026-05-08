@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# description: Show battery status
+# version: 0.1.0
+# author: bitplugg
+for b in /sys/class/power_supply/BAT*; do
+  [ -d "$b" ] && echo "$(cat $b/status 2>/dev/null): $(cat $b/capacity 2>/dev/null)%"
+done
+echo "no battery"

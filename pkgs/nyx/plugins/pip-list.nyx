@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: List installed pip packages
+# version: 0.1.0
+# author: bitplugg
+pip3 list 2>/dev/null | head -30 || pip list 2>/dev/null | head -30 || echo "no pip"

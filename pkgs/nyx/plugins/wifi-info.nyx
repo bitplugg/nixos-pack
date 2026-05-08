@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show WiFi information
+# version: 0.1.0
+# author: bitplugg
+iwconfig 2>/dev/null || iw dev 2>/dev/null || echo "no WiFi interface"
+echo "---"
+nmcli device wifi list 2>/dev/null | head -10 || true

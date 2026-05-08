@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+# description: Find large files
+# version: 0.1.0
+# author: bitplugg
+import os, sys
+top = sys.argv[1] if len(sys.argv) > 1 else "/"
+limit = int(sys.argv[2]) if len(sys.argv) > 2 else 20
+try:
+    cmd = f'find {top} -type f -size +100M -exec ls -lh {{}} \\; 2>/dev/null | sort -k5 -rh | head -{limit}'
+    r = os.popen(cmd)
+    print(r.read().strip() or f"no files >100M under {top}")
+except:
+    print("error scanning")

@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+# description: Whois lookup
+# version: 0.1.0
+# author: bitplugg
+import subprocess, sys
+domain = sys.argv[1] if len(sys.argv) > 1 else "example.com"
+try:
+    r = subprocess.run(["whois", domain], capture_output=True, text=True, timeout=10)
+    out = r.stdout.strip()[:2000]
+    print(out if out else r.stderr.strip()[:500])
+except FileNotFoundError:
+    print("whois not installed")
+except Exception as e:
+    print(f"error: {e}")

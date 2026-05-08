@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show Docker container stats
+# version: 0.1.0
+# author: bitplugg
+docker stats --no-stream --format 'table {{.Name}}\t{{.CPUPerc}}\t{{.MemPerc}}' 2>/dev/null | head -15 || echo 'no docker'

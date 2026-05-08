@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show .NET version
+# version: 0.1.0
+# author: bitplugg
+dotnet --version 2>/dev/null || echo "no dotnet"
+echo "---"
+dotnet --list-sdks 2>/dev/null | head -10 || true

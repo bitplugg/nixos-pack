@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show current system path
+# version: 0.1.0
+# author: bitplugg
+readlink /run/current-system 2>/dev/null || echo "no current-system"
+echo "---"
+nix eval --raw ".#nixosConfigurations.$(hostname).config.system.build.toplevel" 2>/dev/null || true

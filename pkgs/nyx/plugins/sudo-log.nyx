@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show sudo log entries
+# version: 0.1.0
+# author: bitplugg
+cat /var/log/auth.log 2>/dev/null | grep sudo | tail -20 || journalctl -t sudo --no-hostname -n 20 --no-pager -q 2>/dev/null || echo "no sudo log"

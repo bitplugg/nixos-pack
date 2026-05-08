@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# description: Show sysctl parameters
+# version: 0.1.0
+# author: bitplugg
+echo "Key sysctl parameters:"
+sysctl kernel.hostname kernel.osrelease vm.swappiness net.ipv4.ip_forward 2>/dev/null || true

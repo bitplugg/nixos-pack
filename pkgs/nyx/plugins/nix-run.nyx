@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Run a flake app
+# version: 0.1.0
+# author: bitplugg
+attr="${1:-.#default}"
+echo "Running $attr..."
+nix run "$attr" 2>&1

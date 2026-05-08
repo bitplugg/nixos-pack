@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: List input devices
+# version: 0.1.0
+# author: bitplugg
+cat /proc/bus/input/devices 2>/dev/null | head -40 || ls -la /dev/input/ 2>/dev/null || echo "no input devices"

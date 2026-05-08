@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show CMake version
+# version: 0.1.0
+# author: bitplugg
+cmake --version 2>/dev/null | head -1 || echo "no cmake"

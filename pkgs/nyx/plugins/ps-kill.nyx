@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# description: Kill a process by name
+# version: 0.1.0
+# author: bitplugg
+name="$1"
+if [ -z "$name" ]; then echo "Usage: ps-kill <process-name>"; exit 1; fi
+pids=$(pgrep -f "$name" 2>/dev/null)
+if [ -z "$pids" ]; then echo "No process found: $name"; exit 1; fi
+echo "Killing: $name (PIDs: $pids)"
+kill $pids 2>/dev/null && echo "killed" || echo "failed to kill (try sudo)"

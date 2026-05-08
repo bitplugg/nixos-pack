@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: List systemd timers
+# version: 0.1.0
+# author: bitplugg
+systemctl list-timers --no-legend 2>/dev/null | head -20 || echo "no timers"

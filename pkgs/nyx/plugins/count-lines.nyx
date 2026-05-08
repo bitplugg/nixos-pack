@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# description: Count lines/chars/words
+# version: 0.1.0
+# author: bitplugg
+if [ -t 0 ]; then
+  for f in "$@"; do
+    [ -f "$f" ] && wc -l -c -w "$f"
+  done
+else
+  wc -l -c -w
+fi

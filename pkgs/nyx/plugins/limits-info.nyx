@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# description: Show system limits
+# version: 0.1.0
+# author: bitplugg
+echo "User limits:"
+ulimit -a 2>/dev/null | head -20
+echo "---"
+cat /etc/security/limits.conf 2>/dev/null | grep -v "^#" | head -20 || true

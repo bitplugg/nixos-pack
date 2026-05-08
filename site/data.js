@@ -33,6 +33,7 @@ var ARTICLES = [
   { id: "nixos-top",          en: "nixos-top",          ru: "nixos-top" },
   { id: "brrtfetch",          en: "brrtfetch",          ru: "brrtfetch" },
   { id: "rkn-block-checker",  en: "rkn-block-checker",  ru: "rkn-block-checker" },
+  { id: "plugins",            en: "Plugin Store",        ru: "Магазин плагинов" },
 ];
 
 // ── English articles ──────────────────────────────────────
@@ -512,6 +513,18 @@ art("ru", "rkn-block-checker", "rkn-block-checker", `
 <pre>nixos-pack.homeManagerModules.rkn-block-checker</pre>
 `);
 
+// ── Plugins article ────────────────────────────────────────
+
+art("en", "plugins", "Plugin Store", `
+<p>The nyx CLI ships with <strong id="plugin-count-en"></strong> built-in .nyx plugins covering system info, network diagnostics, NixOS management, security auditing, and more.</p>
+<div id="plugin-table-container"></div>
+`);
+
+art("ru", "plugins", "Магазин плагинов", `
+<p>nyx поставляется с <strong id="plugin-count-ru"></strong> встроенными .nyx плагинами для диагностики системы, сети, NixOS, безопасности и многого другого.</p>
+<div id="plugin-table-container"></div>
+`);
+
 // ── Render ─────────────────────────────────────────────────
 
 function render() {
@@ -543,6 +556,42 @@ function render() {
   document.getElementById("article-title").textContent = DATA[LANG][ARTICLE].title;
   document.getElementById("article-body").innerHTML = DATA[LANG][ARTICLE].html;
   document.documentElement.lang = LANG;
+
+  if (ARTICLE === "plugins") {
+    renderPluginStore();
+  }
+}
+
+function renderPluginStore() {
+  var countEl = document.getElementById("plugin-count-" + LANG);
+  if (countEl) countEl.textContent = PLUGINS.length;
+
+  var container = document.getElementById("plugin-table-container");
+  if (!container) return;
+
+  var html = '<table class="plugin-table"><thead><tr>';
+  if (LANG === "en") {
+    html += '<th>Plugin</th><th>Description</th><th>Language</th><th>Rating</th><th>Downloads</th>';
+  } else {
+    html += '<th>Плагин</th><th>Описание</th><th>Язык</th><th>Рейтинг</th><th>Скачивания</th>';
+  }
+  html += '</tr></thead><tbody>';
+
+  for (var i = 0; i < PLUGINS.length; i++) {
+    var p = PLUGINS[i];
+    var stars = "";
+    for (var s = 0; s < Math.floor(p.r); s++) stars += "★";
+    if (p.r - Math.floor(p.r) >= 0.5) stars += "½";
+    html += '<tr>';
+    html += '<td><code>' + p.name + '</code></td>';
+    html += '<td>' + p.desc + '</td>';
+    html += '<td>' + p.lang + '</td>';
+    html += '<td class="stars">' + stars + '</td>';
+    html += '<td>' + p.dl + '</td>';
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  container.innerHTML = html;
 }
 
 function navigate(id) {

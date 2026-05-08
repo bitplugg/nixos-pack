@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# description: Play audio file
+# version: 0.1.0
+# author: bitplugg
+file="$1"
+if [ -z "$file" ]; then echo "Usage: audio-play <file>"; exit 1; fi
+if [ ! -f "$file" ]; then echo "File not found: $file"; exit 1; fi
+aplay "$file" 2>/dev/null || paplay "$file" 2>/dev/null || ffplay -nodisp -autoexit "$file" 2>/dev/null || echo "no player"

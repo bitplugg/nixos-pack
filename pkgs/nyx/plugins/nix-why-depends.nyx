@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# description: Show why a package depends on another
+# version: 0.1.0
+# author: bitplugg
+pkg="$1"
+dep="$2"
+if [ -z "$pkg" ] || [ -z "$dep" ]; then
+  echo "Usage: nix-why-depends <package> <dependency>"
+  exit 1
+fi
+nix why-depends "nixpkgs#$pkg" "nixpkgs#$dep" 2>/dev/null | head -30 || echo "analysis failed"

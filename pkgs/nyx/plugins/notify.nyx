@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Send desktop notification
+# version: 0.1.0
+# author: bitplugg
+title="${1:-nyx}"
+msg="${2:-Notification from nyx plugin}"
+notify-send "$title" "$msg" 2>/dev/null || echo "notify-send not available"

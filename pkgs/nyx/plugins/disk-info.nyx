@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show disk and partition info
+# version: 0.1.0
+# author: bitplugg
+lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT 2>/dev/null || lsblk
+echo "---"
+df -h / /nix /home /boot 2>/dev/null || df -h

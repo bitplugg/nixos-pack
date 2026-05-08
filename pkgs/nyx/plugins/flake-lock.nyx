@@ -1,0 +1,18 @@
+#!/usr/bin/env python3
+# description: Show flake.lock summary
+# version: 0.1.0
+# author: bitplugg
+import json, os, sys
+lock = os.path.join(os.getcwd(), "flake.lock")
+if not os.path.exists(lock):
+    print("no flake.lock in current directory")
+    sys.exit(0)
+with open(lock) as f:
+    data = json.load(f)
+nodes = data.get("nodes", {})
+for name, node in sorted(nodes.items()):
+    if name == "root": continue
+    locked = node.get("locked", {})
+    rev = (locked.get("rev") or "?")[:8]
+    last = locked.get("lastModified", "")
+    print(f"  {name:<20} {rev}  {last}")

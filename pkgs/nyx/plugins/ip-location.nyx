@@ -1,0 +1,20 @@
+#!/usr/bin/env python3
+# description: Lookup IP geolocation
+# version: 0.1.0
+# author: bitplugg
+import subprocess, sys, json
+ip = sys.argv[1] if len(sys.argv) > 1 else ""
+url = f"http://ip-api.com/json/{ip}" if ip else "http://ip-api.com/json"
+try:
+    r = subprocess.run(["curl", "-s", url], capture_output=True, text=True, timeout=5)
+    data = json.loads(r.stdout)
+    if data.get("status") == "success":
+        print(f'IP: {data.get("query")}')
+        print(f'Location: {data.get("city")}, {data.get("regionName")}, {data.get("country")}')
+        print(f'ISP: {data.get("isp")}')
+        print(f'Org: {data.get("org")}')
+        print(f'Lat/Lon: {data.get("lat")}/{data.get("lon")}')
+    else:
+        print(f'lookup failed: {data.get("message", "unknown")}')
+except Exception as e:
+    print(f"error: {e}")

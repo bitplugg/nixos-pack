@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# description: Show flake.lock changes
+# version: 0.1.0
+# author: bitplugg
+if [ -f flake.lock ]; then
+  git diff flake.lock 2>/dev/null | head -60 || echo "no git diff available"
+else
+  echo "no flake.lock"
+fi

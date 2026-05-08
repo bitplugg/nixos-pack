@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+# description: Decode JWT token
+# version: 0.1.0
+# author: bitplugg
+import sys, base64, json
+token = sys.argv[1] if len(sys.argv) > 1 else sys.stdin.read().strip()
+try:
+    parts = token.split(".")
+    if len(parts) != 3:
+        print("not a valid JWT")
+        sys.exit(1)
+    for i, name in enumerate(["header", "payload"]):
+        padded = parts[i] + "=" * (4 - len(parts[i]) % 4)
+        decoded = base64.urlsafe_b64decode(padded)
+        parsed = json.loads(decoded)
+        print(f"{name}:")
+        print(json.dumps(parsed, indent=2))
+except Exception as e:
+    print(f"decode failed: {e}")

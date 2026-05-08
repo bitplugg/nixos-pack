@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Search nixpkgs
+# version: 0.1.0
+# author: bitplugg
+query="$*"
+if [ -z "$query" ]; then echo "Usage: nix-search <query>"; exit 1; fi
+nix search nixpkgs "$query" 2>/dev/null | head -30 || echo "search failed"

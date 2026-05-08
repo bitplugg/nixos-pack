@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Add a system group
+# version: 0.1.0
+# author: bitplugg
+group="$1"
+if [ -z "$group" ]; then echo "Usage: groupadd <groupname>"; exit 1; fi
+sudo groupadd "$group" 2>/dev/null && echo "group $group created" || echo "failed to create group $group"

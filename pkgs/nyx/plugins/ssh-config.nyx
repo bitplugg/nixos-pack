@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# description: Check SSH config permissions
+# version: 0.1.0
+# author: bitplugg
+echo "SSH config:"
+for f in /etc/ssh/sshd_config /etc/ssh/ssh_config ~/.ssh/config; do
+  [ -f "$f" ] && echo "  $f ($(stat -c '%a %U' "$f" 2>/dev/null))"
+done
+echo "---"
+grep -E "^(PermitRootLogin|PasswordAuthentication|Port)" /etc/ssh/sshd_config 2>/dev/null || echo "no sshd_config"

@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# description: Find world-writable files
+# version: 0.1.0
+# author: bitplugg
+echo "World-writable files:"
+find / -perm -0002 -type f 2>/dev/null | head -20 || echo "none found"

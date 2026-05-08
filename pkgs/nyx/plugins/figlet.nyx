@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: ASCII art text
+# version: 0.1.0
+# author: bitplugg
+text="$*"
+if [ -z "$text" ]; then text="NixOS"; fi
+figlet "$text" 2>/dev/null || echo "figlet not installed"

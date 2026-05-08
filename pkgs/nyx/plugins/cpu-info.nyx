@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# description: Display CPU information
+# version: 0.1.0
+# author: bitplugg
+echo "CPU: $(grep model.name /proc/cpuinfo | head -1 | cut -d: -f2)"
+echo "Cores: $(nproc)"
+echo "Arch: $(uname -m)"
+grep -c ^processor /proc/cpuinfo | xargs echo "Threads:"
+lscpu 2>/dev/null | grep -E "^(CPU|Thread|Core|Socket)" || true

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show active network connections
+# version: 0.1.0
+# author: bitplugg
+ss -tunp 2>/dev/null | head -30 || netstat -tunp 2>/dev/null | head -30 || echo "no connections"

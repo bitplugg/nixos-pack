@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+# description: Simple TCP port scan
+# version: 0.1.0
+# author: bitplugg
+import socket, sys, concurrent.futures
+host = sys.argv[1] if len(sys.argv) > 1 else "127.0.0.1"
+ports = [22, 80, 443, 8080, 8443, 3000, 5000, 5432, 6379, 27017]
+if len(sys.argv) > 2:
+    ports = [int(p) for p in sys.argv[2].split(",")]
+def check(p):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(1)
+    r = s.connect_ex((host, p))
+    s.close()
+    return (p, r == 0)
+with concurrent.futures.ThreadPoolExecutor(max_workers=10) as ex:
+    for port, is_open in ex.map(check, ports):
+        status = "OPEN" if is_open else "closed"
+        print(f"  {port}: {status}")

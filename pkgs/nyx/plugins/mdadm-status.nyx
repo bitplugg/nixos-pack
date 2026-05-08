@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show RAID status
+# version: 0.1.0
+# author: bitplugg
+cat /proc/mdstat 2>/dev/null || echo "no md RAID"

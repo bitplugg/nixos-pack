@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show Java version
+# version: 0.1.0
+# author: bitplugg
+java -version 2>&1 | head -3 || echo "no java"

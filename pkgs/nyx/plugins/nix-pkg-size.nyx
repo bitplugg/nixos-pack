@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# description: Show package sizes in store
+# version: 0.1.0
+# author: bitplugg
+echo "Store root directory sizes:"
+du -sh /nix/store/*/ 2>/dev/null | sort -rh | head -20

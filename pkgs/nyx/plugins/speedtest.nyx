@@ -1,0 +1,11 @@
+#!/usr/bin/env python3
+# description: Simple network speed test
+# version: 0.1.0
+# author: bitplugg
+import subprocess
+try:
+    r = subprocess.run(["curl", "-s", "-o", "/dev/null", "-w", "%{speed_download}", "https://cachefly.cachefly.net/100mb.test", "--max-time", "10"], capture_output=True, text=True, timeout=15)
+    speed = float(r.stdout.strip()) / 1024 / 1024 * 8 if r.stdout.strip() else 0
+    print(f"Download speed: {speed:.1f} Mbps")
+except Exception as e:
+    print(f"speedtest failed: {e}")

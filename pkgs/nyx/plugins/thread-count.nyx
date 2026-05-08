@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# description: Show thread counts per process
+# version: 0.1.0
+# author: bitplugg
+echo "Top threads:"
+ps -eo nlwp,pid,args --sort=-nlwp 2>/dev/null | head -20
+echo "---"
+echo "Total threads: $(ps -eo nlwp | awk '{sum+=$1} END {print sum}')"

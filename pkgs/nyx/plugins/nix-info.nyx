@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# description: Show Nix version and config
+# version: 0.1.0
+# author: bitplugg
+nix --version 2>/dev/null
+echo "Config:"
+nix show-config 2>/dev/null | head -20 || echo "no nix config"
+echo "System: $(nix eval --raw nixpkgs.system 2>/dev/null || echo unknown)"

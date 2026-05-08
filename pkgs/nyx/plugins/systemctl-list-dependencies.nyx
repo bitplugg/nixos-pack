@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# description: List unit dependencies
+# version: 0.1.0
+# author: bitplugg
+unit="${1:-default.target}"
+systemctl list-dependencies "$unit" 2>/dev/null | head -40 || echo "no dependencies"

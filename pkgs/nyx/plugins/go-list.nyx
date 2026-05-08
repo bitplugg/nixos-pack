@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: List Go binaries
+# version: 0.1.0
+# author: bitplugg
+ls $(go env GOPATH)/bin/ 2>/dev/null | head -20 || echo "no Go binaries"

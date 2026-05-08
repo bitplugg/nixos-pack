@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show recent audit events
+# version: 0.1.0
+# author: bitplugg
+auditctl -s 2>/dev/null | head -5 || echo "no auditd"
+echo "---"
+ausearch --start recent -m USER_LOGIN 2>/dev/null | tail -20 || true

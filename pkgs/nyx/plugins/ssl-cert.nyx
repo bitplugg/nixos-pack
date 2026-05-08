@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Check SSL certificate
+# version: 0.1.0
+# author: bitplugg
+host="${1:-google.com}"
+port="${2:-443}"
+echo | openssl s_client -connect "$host:$port" -servername "$host" 2>/dev/null | openssl x509 -noout -dates -subject -issuer 2>/dev/null || echo "SSL check failed"

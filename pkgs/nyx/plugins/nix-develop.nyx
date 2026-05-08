@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# description: Enter dev shell
+# version: 0.1.0
+# author: bitplugg
+attr="${1:-.#devShells.$(nix eval --raw nixpkgs.system 2>/dev/null || echo x86_64-linux).default}"
+nix develop "$attr" 2>&1

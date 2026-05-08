@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# description: Find empty files and dirs
+# version: 0.1.0
+# author: bitplugg
+echo "Empty files:"
+find /tmp -type f -empty 2>/dev/null | head -10 || true
+echo "Empty dirs:"
+find /tmp -type d -empty 2>/dev/null | head -10 || true

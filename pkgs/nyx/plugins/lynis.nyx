@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# description: Run lynis audit
+# version: 0.1.0
+# author: bitplugg
+if which lynis >/dev/null 2>&1; then
+  lynis audit system 2>/dev/null | tail -20
+else
+  echo "lynis not installed"
+fi

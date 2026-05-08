@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# description: Hash a file
+# version: 0.1.0
+# author: bitplugg
+file="$1"
+if [ -z "$file" ]; then echo "Usage: hash-file <file>"; exit 1; fi
+if [ ! -f "$file" ]; then echo "File not found: $file"; exit 1; fi
+echo "MD5:    $(md5sum "$file" 2>/dev/null | cut -d" " -f1)"
+echo "SHA1:   $(sha1sum "$file" 2>/dev/null | cut -d" " -f1)"
+echo "SHA256: $(sha256sum "$file" 2>/dev/null | cut -d" " -f1)"

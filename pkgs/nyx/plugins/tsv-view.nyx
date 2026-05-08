@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# description: View TSV file
+# version: 0.1.0
+# author: bitplugg
+file="$1"
+if [ -z "$file" ]; then
+  column -t -s"$(printf \t)" 2>/dev/null | head -20
+else
+  [ -f "$file" ] && column -t -s"$(printf \t)" "$file" 2>/dev/null | head -20
+fi

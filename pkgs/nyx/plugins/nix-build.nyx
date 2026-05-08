@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Build a flake package
+# version: 0.1.0
+# author: bitplugg
+attr="${1:-.#default}"
+echo "Building $attr..."
+nix build "$attr" 2>&1 | tail -20

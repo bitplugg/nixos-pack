@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: List nix channels
+# version: 0.1.0
+# author: bitplugg
+nix-channel --list 2>/dev/null || echo "no channels"

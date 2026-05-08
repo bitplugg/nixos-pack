@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# description: Set a sysctl parameter
+# version: 0.1.0
+# author: bitplugg
+key="$1"
+val="$2"
+if [ -z "$key" ] || [ -z "$val" ]; then
+  echo "Usage: sysctl-set <key> <value>"
+  exit 1
+fi
+sudo sysctl -w "$key=$val" 2>/dev/null && echo "set $key=$val" || echo "failed"

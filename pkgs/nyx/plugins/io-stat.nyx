@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show IO statistics
+# version: 0.1.0
+# author: bitplugg
+iostat 2>/dev/null | head -20 || echo "no iostat"
+echo "---"
+cat /proc/diskstats 2>/dev/null | head -20 || true

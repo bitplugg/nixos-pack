@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: List apt packages (Debian)
+# version: 0.1.0
+# author: bitplugg
+dpkg -l 2>/dev/null | head -30 || echo "not a Debian system"

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show user sessions
+# version: 0.1.0
+# author: bitplugg
+loginctl list-sessions 2>/dev/null || echo "no sessions"
+echo "---"
+loginctl list-users 2>/dev/null || true

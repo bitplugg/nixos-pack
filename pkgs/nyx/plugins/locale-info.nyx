@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show locale settings
+# version: 0.1.0
+# author: bitplugg
+locale 2>/dev/null | head -20 || echo "no locale"

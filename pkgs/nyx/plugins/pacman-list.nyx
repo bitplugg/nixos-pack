@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: List pacman packages (Arch)
+# version: 0.1.0
+# author: bitplugg
+pacman -Q 2>/dev/null | head -30 || echo "not an Arch system"

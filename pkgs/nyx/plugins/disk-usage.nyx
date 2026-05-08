@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show disk usage by directory
+# version: 0.1.0
+# author: bitplugg
+du -sh /* 2>/dev/null | sort -rh | head -20 || echo "no permissions"

@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# description: Base64 encode stdin
+# version: 0.1.0
+# author: bitplugg
+if [ -t 0 ]; then
+  echo "Usage: echo text | base64-encode"
+  exit 1
+fi
+base64 -w 0
+echo

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show OS version info
+# version: 0.1.0
+# author: bitplugg
+cat /etc/os-release 2>/dev/null || cat /usr/lib/os-release 2>/dev/null || echo "OS unknown"
+echo "---"
+hostnamectl 2>/dev/null || uname -a

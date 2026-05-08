@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show memory per systemd service
+# version: 0.1.0
+# author: bitplugg
+systemd-cgtop --depth=1 -n 15 --iterations=1 2>/dev/null || echo "requires root"

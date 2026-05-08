@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# description: Show unit properties
+# version: 0.1.0
+# author: bitplugg
+unit="${1:-systemd-journald}"
+systemctl show "$unit" 2>/dev/null | head -30 || echo "unit not found"

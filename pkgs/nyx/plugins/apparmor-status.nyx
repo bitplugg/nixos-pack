@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show AppArmor status
+# version: 0.1.0
+# author: bitplugg
+aa-status 2>/dev/null | head -20 || cat /sys/module/apparmor/parameters/enabled 2>/dev/null || echo "AppArmor not installed"

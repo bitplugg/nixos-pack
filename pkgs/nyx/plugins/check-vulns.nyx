@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Check for known CVEs
+# version: 0.1.0
+# author: bitplugg
+echo "CVE check requires external tools"
+which vulnx 2>/dev/null && vulnx -list 2>/dev/null | head -20 || echo "vulnx not installed"
+which grype 2>/dev/null && grype 2>/dev/null | head -20 || true

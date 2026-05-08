@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show Btrfs status
+# version: 0.1.0
+# author: bitplugg
+btrfs filesystem show 2>/dev/null || echo "no btrfs"
+echo "---"
+btrfs device usage / 2>/dev/null | head -20 || true

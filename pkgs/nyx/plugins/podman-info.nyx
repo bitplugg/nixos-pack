@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show Podman status
+# version: 0.1.0
+# author: bitplugg
+podman info 2>/dev/null | head -15 || echo "no podman"
+echo "---"
+podman ps 2>/dev/null | head -15 || true

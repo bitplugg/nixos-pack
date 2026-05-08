@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Sorted directory usage
+# version: 0.1.0
+# author: bitplugg
+dir="${1:-.}"
+depth="${2:-2}"
+du -h --max-depth="$depth" "$dir" 2>/dev/null | sort -rh | head -20

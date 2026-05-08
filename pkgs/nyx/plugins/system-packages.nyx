@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: List installed system packages
+# version: 0.1.0
+# author: bitplugg
+nix-env -q 2>/dev/null | head -40 || echo "no user packages"
+echo "--- system packages ---"
+ls /run/current-system/sw/bin/ 2>/dev/null | head -40 || echo "no system profile"

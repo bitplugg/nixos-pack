@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# description: Show booted system path
+# version: 0.1.0
+# author: bitplugg
+readlink /run/booted-system 2>/dev/null || echo "no booted-system"
+diff -r /run/booted-system /run/current-system 2>/dev/null && echo "System is current" || echo "System differs from booted"

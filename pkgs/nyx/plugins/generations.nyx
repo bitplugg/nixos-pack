@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: List NixOS generations
+# version: 0.1.0
+# author: bitplugg
+nixos-rebuild list-generations 2>/dev/null | head -20 || nix-env --list-generations 2>/dev/null | tail -20 || echo "no generation info"

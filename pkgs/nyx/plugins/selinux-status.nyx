@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show SELinux status
+# version: 0.1.0
+# author: bitplugg
+sestatus 2>/dev/null || getenforce 2>/dev/null || echo "SELinux not installed"

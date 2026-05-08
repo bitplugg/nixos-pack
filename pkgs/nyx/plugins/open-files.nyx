@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# description: Show open file counts per process
+# version: 0.1.0
+# author: bitplugg
+echo "Top by open files:"
+for pid in $(ps -eo pid --no-headers 2>/dev/null | head -20); do
+  count=$(ls /proc/$pid/fd 2>/dev/null | wc -l)
+  name=$(cat /proc/$pid/comm 2>/dev/null)
+  [ -n "$name" ] && echo "$count $name"
+done | sort -rn | head -20

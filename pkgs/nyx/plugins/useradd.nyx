@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Add a system user
+# version: 0.1.0
+# author: bitplugg
+user="$1"
+if [ -z "$user" ]; then echo "Usage: useradd <username>"; exit 1; fi
+sudo useradd -m "$user" 2>/dev/null && echo "user $user created" || echo "failed to create user $user"

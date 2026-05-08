@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# description: Countdown from N
+# version: 0.1.0
+# author: bitplugg
+n="${1:-10}"
+while [ "$n" -gt 0 ]; do
+  echo "$n..."
+  n=$((n - 1))
+  sleep 1
+done
+echo "Go!"

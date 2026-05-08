@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show Zig version
+# version: 0.1.0
+# author: bitplugg
+zig version 2>/dev/null || echo "no zig"

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# description: Show unix timestamp
+# version: 0.1.0
+# author: bitplugg
+echo "Current Unix timestamp: $(date +%s)"
+echo "---"
+if [ -n "$1" ]; then
+  date -d "@$1" 2>/dev/null || echo "invalid timestamp"
+fi

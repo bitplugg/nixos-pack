@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show ZFS pool status
+# version: 0.1.0
+# author: bitplugg
+zpool status 2>/dev/null | head -30 || echo "no ZFS"
+echo "---"
+zfs list 2>/dev/null | head -15 || true

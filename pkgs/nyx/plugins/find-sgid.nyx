@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# description: Find SGID binaries
+# version: 0.1.0
+# author: bitplugg
+echo "SGID binaries:"
+find / -perm -2000 -type f 2>/dev/null | head -30 || echo "no SGID found"

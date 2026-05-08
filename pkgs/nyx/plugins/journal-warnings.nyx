@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show recent journal warnings
+# version: 0.1.0
+# author: bitplugg
+journalctl -p warning -n 20 --no-hostname --no-pager -q 2>/dev/null || echo "no journal"

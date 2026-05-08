@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# description: Take a screenshot
+# version: 0.1.0
+# author: bitplugg
+out="${1:-screenshot_$(date +%s).png}"
+import -window root "$out" 2>/dev/null || grim "$out" 2>/dev/null || echo "no screenshot tool"

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show NVMe information
+# version: 0.1.0
+# author: bitplugg
+nvme list 2>/dev/null || echo "no NVMe devices"

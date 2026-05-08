@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# description: Terminal beep
+# version: 0.1.0
+# author: bitplugg
+count="${1:-1}"
+for i in $(seq 1 $count); do
+  echo -ne "\a"
+  [ "$i" -lt "$count" ] && sleep 0.2
+done

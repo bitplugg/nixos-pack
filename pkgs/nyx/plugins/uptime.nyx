@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# description: Show system uptime and load
+# version: 0.1.0
+# author: bitplugg
+uptime
+echo "---"
+awk '{printf "Uptime seconds: %s\\n", \$1}' /proc/uptime
+echo "Load: $(cat /proc/loadavg)"

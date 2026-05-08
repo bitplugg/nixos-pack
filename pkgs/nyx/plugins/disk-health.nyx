@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+# description: Check disk health (SMART)
+# version: 0.1.0
+# author: bitplugg
+import subprocess
+try:
+    r = subprocess.run(["sudo", "smartctl", "--scan"], capture_output=True, text=True, timeout=5)
+    print("Detected devices:")
+    for line in r.stdout.strip().split("\n"):
+        print(f"  {line}")
+except FileNotFoundError:
+    print("smartctl not installed")
+except Exception as e:
+    print(f"error: {e}")

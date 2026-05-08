@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# description: Show network interface details
+# version: 0.1.0
+# author: bitplugg
+echo "Network Interfaces:"
+for i in /sys/class/net/*; do
+  [ -d "$i" ] && echo "  $(basename $i): $(cat $i/operstate 2>/dev/null) speed=$(cat $i/speed 2>/dev/null)Mbps"
+done

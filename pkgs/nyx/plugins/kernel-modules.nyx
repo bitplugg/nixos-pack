@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: List loaded kernel modules
+# version: 0.1.0
+# author: bitplugg
+lsmod 2>/dev/null | head -30 || cat /proc/modules 2>/dev/null | head -30

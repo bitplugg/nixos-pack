@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show monitor EDID
+# version: 0.1.0
+# author: bitplugg
+for edid in /sys/class/drm/*/edid; do
+  [ -f "$edid" ] && echo "$(basename $(dirname $edid)): $(cat $edid 2>/dev/null | strings | head -5)"
+done 2>/dev/null || echo "no EDID info"

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Record audio from mic
+# version: 0.1.0
+# author: bitplugg
+out="${1:-audio_$(date +%s).wav}"
+echo "Recording to $out (Ctrl+C to stop)"
+arecord "$out" 2>/dev/null || parec "$out" 2>/dev/null || echo "recording failed"

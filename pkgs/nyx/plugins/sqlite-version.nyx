@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show SQLite version
+# version: 0.1.0
+# author: bitplugg
+sqlite3 --version 2>/dev/null | awk '{print $1}' || echo "no sqlite3"

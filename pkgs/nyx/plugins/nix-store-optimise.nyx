@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# description: Optimise nix store
+# version: 0.1.0
+# author: bitplugg
+echo "Starting store optimisation..."
+nix store optimise 2>&1 || echo "optimisation failed"

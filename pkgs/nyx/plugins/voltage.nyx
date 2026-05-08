@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show system voltages
+# version: 0.1.0
+# author: bitplugg
+sensors 2>/dev/null | grep -iE 'V[A-Z]|volt' || echo 'no voltage info'

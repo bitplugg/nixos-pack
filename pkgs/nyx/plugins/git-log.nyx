@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# description: Show recent git log
+# version: 0.1.0
+# author: bitplugg
+count="${1:-10}"
+git log --oneline -n "$count" 2>/dev/null || echo "not a git repo"

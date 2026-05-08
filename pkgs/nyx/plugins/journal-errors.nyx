@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show recent journal errors
+# version: 0.1.0
+# author: bitplugg
+journalctl -p err -n 30 --no-hostname --no-pager -q 2>/dev/null || echo "no journal"

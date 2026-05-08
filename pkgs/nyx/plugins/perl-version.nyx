@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show Perl version
+# version: 0.1.0
+# author: bitplugg
+perl --version 2>/dev/null | head -2 || echo "no perl"

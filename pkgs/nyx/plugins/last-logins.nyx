@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show last user logins
+# version: 0.1.0
+# author: bitplugg
+last -n 20 2>/dev/null || echo "no login history"

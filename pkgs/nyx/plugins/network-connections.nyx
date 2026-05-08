@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show network connection states
+# version: 0.1.0
+# author: bitplugg
+ss -tunap 2>/dev/null | awk 'NR>1{print \$1}' | sort | uniq -c | sort -rn || echo 'no data'

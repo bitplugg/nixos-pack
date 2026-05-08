@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show GCC version
+# version: 0.1.0
+# author: bitplugg
+gcc --version 2>/dev/null | head -1 || echo "no gcc"
+echo "---"
+g++ --version 2>/dev/null | head -1 || true

@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+# description: Generate QR code from stdin
+# version: 0.1.0
+# author: bitplugg
+import subprocess, sys
+data = sys.stdin.read().strip() or (sys.argv[1] if len(sys.argv) > 1 else "hello world")
+try:
+    r = subprocess.run(["qrencode", "-t", "ansiutf8"], input=data, capture_output=True, text=True, timeout=5)
+    print(r.stdout or "qrencode not available")
+except FileNotFoundError:
+    print("qrencode not installed")
+except Exception as e:
+    print(f"error: {e}")

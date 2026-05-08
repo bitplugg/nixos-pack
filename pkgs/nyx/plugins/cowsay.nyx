@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# description: Cowsay a message
+# version: 0.1.0
+# author: bitplugg
+msg="$*"
+if [ -z "$msg" ]; then
+  msg=$(cat)
+fi
+echo "$msg" | cowsay -n 2>/dev/null || echo "$msg"

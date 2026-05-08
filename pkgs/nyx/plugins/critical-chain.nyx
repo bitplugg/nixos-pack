@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show critical boot chain
+# version: 0.1.0
+# author: bitplugg
+systemd-analyze critical-chain 2>/dev/null | head -30 || echo "no systemd-analyze"

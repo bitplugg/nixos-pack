@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show nixpkgs version
+# version: 0.1.0
+# author: bitplugg
+nix eval --raw "nixpkgs.lib.version" 2>/dev/null && echo ""
+echo "---"
+nix eval "nixpkgs.lib.trivial.release" 2>/dev/null && echo ""

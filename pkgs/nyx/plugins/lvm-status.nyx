@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show LVM status
+# version: 0.1.0
+# author: bitplugg
+pvdisplay 2>/dev/null | head -10 || echo "no LVM PV"
+vgdisplay 2>/dev/null | head -10 || true
+lvdisplay 2>/dev/null | head -10 || true

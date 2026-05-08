@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show ARP table
+# version: 0.1.0
+# author: bitplugg
+arp -n 2>/dev/null || ip neigh show 2>/dev/null || cat /proc/net/arp

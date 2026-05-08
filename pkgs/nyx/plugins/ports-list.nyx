@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: List listening ports
+# version: 0.1.0
+# author: bitplugg
+ss -tlnp 2>/dev/null || netstat -tlnp 2>/dev/null || echo "no socket stats"
+echo "---"
+ss -ulnp 2>/dev/null | head -10 || true

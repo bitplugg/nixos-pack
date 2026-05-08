@@ -1,0 +1,11 @@
+#!/usr/bin/env python3
+# description: Format JSON from stdin
+# version: 0.1.0
+# author: bitplugg
+import json, sys
+try:
+    data = json.load(sys.stdin)
+    print(json.dumps(data, indent=2))
+except Exception as e:
+    print(f"invalid JSON: {e}", file=sys.stderr)
+    sys.exit(1)

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show process tree
+# version: 0.1.0
+# author: bitplugg
+ps auxf 2>/dev/null | head -40 || pstree 2>/dev/null | head -40 || echo "no process tree"

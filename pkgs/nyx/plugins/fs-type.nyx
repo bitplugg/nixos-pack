@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show filesystem types
+# version: 0.1.0
+# author: bitplugg
+df -T 2>/dev/null | head -20 | column -t || cat /proc/mounts | awk '{print $1, $3}' | head -20

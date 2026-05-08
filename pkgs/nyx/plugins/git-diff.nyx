@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show git diff
+# version: 0.1.0
+# author: bitplugg
+git diff --stat 2>/dev/null || echo "not a git repo or no changes"

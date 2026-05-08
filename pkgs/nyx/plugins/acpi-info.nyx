@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show ACPI info
+# version: 0.1.0
+# author: bitplugg
+acpi -V 2>/dev/null | head -20 || echo "no acpi"

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show power supply info
+# version: 0.1.0
+# author: bitplugg
+for ps in /sys/class/power_supply/*; do
+  [ -d "$ps" ] && echo "$(basename $ps): $(cat $ps/type 2>/dev/null) - online=$(cat $ps/online 2>/dev/null)"
+done

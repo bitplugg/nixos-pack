@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# description: Show NixOS version
+# version: 0.1.0
+# author: bitplugg
+nixos-version 2>/dev/null && echo ""
+cat /etc/nixos/nixos-version 2>/dev/null || cat /run/current-system/nixos-version 2>/dev/null || echo "NixOS $(nix eval --raw nixpkgs.lib.version 2>/dev/null)"

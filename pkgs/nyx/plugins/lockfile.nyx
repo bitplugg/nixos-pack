@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# description: Simple file locking tool
+# version: 0.1.0
+# author: bitplugg
+lockfile="/tmp/nyx-lock"
+case "${1:-}" in
+  lock)
+    echo "$$" > "$lockfile" 2>/dev/null && echo "locked" || echo "already locked by PID $(cat $lockfile 2>/dev/null)"
+    ;;
+  unlock)
+    rm -f "$lockfile" && echo "unlocked" || echo "not locked"
+    ;;
+  check)
+    [ -f "$lockfile" ] && echo "locked by PID $(cat $lockfile)" || echo "not locked"
+    ;;
+  *)
+    echo "Usage: lockfile {lock|unlock|check}"
+    ;;
+esac

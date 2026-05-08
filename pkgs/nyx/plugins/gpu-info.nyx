@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show GPU information
+# version: 0.1.0
+# author: bitplugg
+lspci 2>/dev/null | grep -iE "VGA|3D|Display" || echo "no GPU info"
+echo "---"
+glxinfo -B 2>/dev/null | head -10 || nvidia-smi 2>/dev/null | head -10 || true

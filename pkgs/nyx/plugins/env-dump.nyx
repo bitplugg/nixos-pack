@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# description: Dump environment variables
+# version: 0.1.0
+# author: bitplugg
+echo "Environment variables:"
+env | sort | head -40
+echo "---"
+echo "Total vars: $(env | wc -l)"

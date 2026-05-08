@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# description: Network statistics
+# version: 0.1.0
+# author: bitplugg
+echo "--- Connections ---"
+ss -s 2>/dev/null || netstat -s 2>/dev/null | head -20 || echo "no stats"
+echo "--- Interface ---"
+ip -s link 2>/dev/null | head -20 || cat /proc/net/dev

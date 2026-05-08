@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# description: Ping a host
+# version: 0.1.0
+# author: bitplugg
+host="${1:-google.com}"
+ping -c 4 "$host" 2>/dev/null || echo "ping failed"

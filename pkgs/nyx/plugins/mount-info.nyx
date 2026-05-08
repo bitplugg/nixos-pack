@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show mount points
+# version: 0.1.0
+# author: bitplugg
+mount -l 2>/dev/null | head -30 || cat /proc/mounts 2>/dev/null | head -30

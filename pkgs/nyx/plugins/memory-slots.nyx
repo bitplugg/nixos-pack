@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# description: Show memory slot info
+# version: 0.1.0
+# author: bitplugg
+echo "Memory slots:"
+dmidecode -t memory 2>/dev/null | grep -E "^(Memory Device|Size:|Type:|Speed|Manufacturer|Locator)" | head -30 || echo "no dmidecode"

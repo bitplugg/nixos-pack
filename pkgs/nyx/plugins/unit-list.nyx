@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# description: List systemd units by state
+# version: 0.1.0
+# author: bitplugg
+echo "Active:"
+systemctl list-units --type=service --state=running --no-legend 2>/dev/null | awk '{print $1}' | head -20
+echo "---"
+echo "Failed:"
+systemctl list-units --type=service --state=failed --no-legend 2>/dev/null | awk '{print $1, $3}'

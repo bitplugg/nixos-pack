@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show GC status and store info
+# version: 0.1.0
+# author: bitplugg
+echo "Store size: $(du -sh /nix/store 2>/dev/null | cut -f1)"
+echo "Store entries: $(ls /nix/store 2>/dev/null | wc -l)"
+nix store gc --print-dead 2>/dev/null | wc -l | awk '{print "Dead paths: " $1}'

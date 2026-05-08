@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show GHC version
+# version: 0.1.0
+# author: bitplugg
+ghc --version 2>/dev/null || echo "no GHC"

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show Node.js version
+# version: 0.1.0
+# author: bitplugg
+node --version 2>/dev/null || echo "no node"
+echo "---"
+npm --version 2>/dev/null | xargs echo "npm" || true

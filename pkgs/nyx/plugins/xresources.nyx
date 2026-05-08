@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# description: Show X resources
+# version: 0.1.0
+# author: bitplugg
+if [ -n "$DISPLAY" ]; then
+  xrdb -query 2>/dev/null | head -30 || echo "no X resources"
+else
+  echo "no X display"
+fi

@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# description: Rebuild and add to boot menu
+# version: 0.1.0
+# author: bitplugg
+echo "Rebuilding NixOS (boot)..."
+sudo nixos-rebuild boot 2>&1 | tail -20

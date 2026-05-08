@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: List USB devices
+# version: 0.1.0
+# author: bitplugg
+lsusb 2>/dev/null || find /dev/bus/usb -type c 2>/dev/null | head -20 || echo "no USB info"

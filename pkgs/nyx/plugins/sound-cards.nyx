@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: List sound cards
+# version: 0.1.0
+# author: bitplugg
+cat /proc/asound/cards 2>/dev/null || aplay -l 2>/dev/null | head -20 || echo "no sound card"

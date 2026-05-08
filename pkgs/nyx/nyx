@@ -37,9 +37,15 @@ ALIASES = {
     "sd": "switch-diff", "c": "clean", "l": "log", "t": "top",
 }
 
+BUNDLED_PLUGINS = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)),
+    "..", "share", "nyx", "plugins",
+)
+
 PLUGIN_DIRS = [
     os.path.expanduser("~/.config/nyx/plugins"),
     "/etc/nyx/plugins",
+    BUNDLED_PLUGINS,
 ]
 
 DEMO_NYX = """\

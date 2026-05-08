@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show Python version
+# version: 0.1.0
+# author: bitplugg
+python3 --version 2>/dev/null || python --version 2>/dev/null || echo "no python"
+echo "---"
+which python3 python 2>/dev/null || true

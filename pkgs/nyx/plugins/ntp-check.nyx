@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Check NTP synchronization
+# version: 0.1.0
+# author: bitplugg
+timedatectl 2>/dev/null | grep -E '(NTP|Time|clock)' || echo 'no timedatectl'
+echo "---"
+chronyc tracking 2>/dev/null | head -5 || ntpq -p 2>/dev/null | head -10 || echo "no NTP tool"

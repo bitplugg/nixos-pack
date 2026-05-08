@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show kernel boot parameters
+# version: 0.1.0
+# author: bitplugg
+cat /proc/cmdline 2>/dev/null | tr " " "\n" | nl || echo "no cmdline"

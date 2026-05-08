@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show PHP version
+# version: 0.1.0
+# author: bitplugg
+php --version 2>/dev/null | head -1 || echo "no php"

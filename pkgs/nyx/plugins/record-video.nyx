@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Record screen video
+# version: 0.1.0
+# author: bitplugg
+out="${1:-recording_$(date +%s).mp4}"
+echo "Recording to $out (Ctrl+C to stop)"
+ffmpeg -f x11grab -video_size 1920x1080 -i :0.0 -c:v libx264 "$out" 2>/dev/null || echo "ffmpeg not installed"

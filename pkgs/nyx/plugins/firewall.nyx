@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# description: Show firewall rules
+# version: 0.1.0
+# author: bitplugg
+echo "--- nftables ---"
+nft list ruleset 2>/dev/null | head -30 || echo "no nftables"
+echo "--- iptables ---"
+iptables -L -n 2>/dev/null | head -20 || echo "no iptables"

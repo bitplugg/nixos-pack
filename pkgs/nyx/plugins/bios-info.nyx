@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# description: Show BIOS/UEFI information
+# version: 0.1.0
+# author: bitplugg
+echo "BIOS:"
+cat /sys/class/dmi/id/bios_vendor 2>/dev/null
+cat /sys/class/dmi/id/bios_version 2>/dev/null
+echo "Board:"
+cat /sys/class/dmi/id/board_name 2>/dev/null
+echo "System:"
+cat /sys/class/dmi/id/product_name 2>/dev/null
+[ -d /sys/firmware/efi ] && echo "Boot: UEFI" || echo "Boot: Legacy"

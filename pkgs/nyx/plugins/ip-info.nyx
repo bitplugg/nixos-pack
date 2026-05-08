@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show IP addresses and interfaces
+# version: 0.1.0
+# author: bitplugg
+ip addr show 2>/dev/null || ifconfig 2>/dev/null
+echo "---"
+ip route show 2>/dev/null || route -n 2>/dev/null

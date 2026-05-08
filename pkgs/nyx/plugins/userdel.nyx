@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Delete a system user
+# version: 0.1.0
+# author: bitplugg
+user="$1"
+if [ -z "$user" ]; then echo "Usage: userdel <username>"; exit 1; fi
+sudo userdel -r "$user" 2>/dev/null && echo "user $user deleted" || echo "failed to delete user $user"

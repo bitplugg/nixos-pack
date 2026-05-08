@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: List rpm packages (RHEL)
+# version: 0.1.0
+# author: bitplugg
+rpm -qa 2>/dev/null | head -30 || echo "not an RPM system"

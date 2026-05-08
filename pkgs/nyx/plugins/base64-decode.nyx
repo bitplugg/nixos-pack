@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# description: Base64 decode stdin
+# version: 0.1.0
+# author: bitplugg
+if [ -t 0 ]; then
+  echo "Usage: echo <base64> | base64-decode"
+  exit 1
+fi
+base64 -d 2>/dev/null || echo "invalid base64"

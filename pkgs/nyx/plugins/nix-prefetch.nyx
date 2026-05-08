@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Prefetch a nixpkgs source
+# version: 0.1.0
+# author: bitplugg
+attr="$1"
+if [ -z "$attr" ]; then echo "Usage: nix-prefetch <attr>"; exit 1; fi
+nix-prefetch-url --unpack "$(nix eval --raw "nixpkgs.$attr.src.url" 2>/dev/null)" 2>/dev/null || nix-prefetch "$attr" 2>/dev/null || echo "failed"

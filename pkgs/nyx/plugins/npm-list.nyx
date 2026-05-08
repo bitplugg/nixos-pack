@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: List global npm packages
+# version: 0.1.0
+# author: bitplugg
+npm list -g --depth=0 2>/dev/null | head -20 || echo "no npm"

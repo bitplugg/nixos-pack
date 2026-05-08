@@ -1,0 +1,10 @@
+#!/usr/bin/env python3
+# description: ROT13 encode stdin
+# version: 0.1.0
+# author: bitplugg
+import sys
+data = sys.stdin.read()
+tab = str.maketrans(
+    "ABCDEFGHIJKLMabcdefghijklmNOPQRSTUVWXYZnopqrstuvwxyz",
+    "NOPQRSTUVWXYZnopqrstuvwxyzABCDEFGHIJKLMabcdefghijklm")
+print(data.translate(tab), end="")

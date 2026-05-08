@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show calendar
+# version: 0.1.0
+# author: bitplugg
+echo "Current date: $(date)"
+echo "---"
+cal 2>/dev/null || ncal 2>/dev/null || echo "no calendar"

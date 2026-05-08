@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show logged-in users
+# version: 0.1.0
+# author: bitplugg
+who 2>/dev/null || echo "no users logged in"
+echo "---"
+w 2>/dev/null | head -10 || true

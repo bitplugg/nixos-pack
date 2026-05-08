@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show PDF metadata
+# version: 0.1.0
+# author: bitplugg
+file="$1"
+if [ -z "$file" ]; then echo "Usage: pdf-info <file>"; exit 1; fi
+pdfinfo "$file" 2>/dev/null | head -20 || echo "pdfinfo not installed"

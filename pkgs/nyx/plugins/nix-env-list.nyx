@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: List nix-env installed packages
+# version: 0.1.0
+# author: bitplugg
+nix-env -q --name 2>/dev/null | sort || echo "no nix-env packages"

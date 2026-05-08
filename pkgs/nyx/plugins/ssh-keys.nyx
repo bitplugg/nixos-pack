@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# description: List SSH authorized keys
+# version: 0.1.0
+# author: bitplugg
+for u in $(awk -F: '$3>=1000 && $3!=65534 {print $1}' /etc/passwd 2>/dev/null); do
+  f=$(eval echo "~$u/.ssh/authorized_keys")
+  [ -f "$f" ] && echo "$u: $(wc -l < $f) keys"
+done || echo "no SSH keys found"

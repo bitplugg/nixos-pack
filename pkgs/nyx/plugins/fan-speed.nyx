@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# description: Show fan speeds
+# version: 0.1.0
+# author: bitplugg
+sensors 2>/dev/null | grep -i fan || echo 'no fan info'
+for f in /sys/class/thermal/cooling_device*/cur_state; do
+  [ -f "$f" ] && echo "$f: $(cat $f 2>/dev/null)"
+done 2>/dev/null

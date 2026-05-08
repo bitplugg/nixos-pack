@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# description: Show kernel version and parameters
+# version: 0.1.0
+# author: bitplugg
+uname -a
+echo "---"
+cat /proc/cmdline 2>/dev/null || echo "no /proc/cmdline"
+echo "---"
+sysctl -a --ignore 2>/dev/null | head -20 || echo "no sysctl"

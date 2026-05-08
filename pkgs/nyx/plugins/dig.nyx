@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: DNS lookup
+# version: 0.1.0
+# author: bitplugg
+target="${1:-google.com}"
+type="${2:-A}"
+dig "$target" "$type" +short 2>/dev/null || echo "dig not available"

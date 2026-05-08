@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# description: Show IRQ affinity
+# version: 0.1.0
+# author: bitplugg
+echo "IRQ affinities:"
+for irq in /proc/irq/*/smp_affinity; do
+  [ -f "$irq" ] && echo "  $(basename $(dirname $irq)): $(cat $irq 2>/dev/null)"
+done 2>/dev/null | head -20 || echo "no IRQ info"

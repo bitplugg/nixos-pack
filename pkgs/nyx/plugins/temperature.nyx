@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# description: Show system temperatures
+# version: 0.1.0
+# author: bitplugg
+sensors 2>/dev/null | head -30 || echo "no sensors"
+echo "---"
+for t in /sys/class/thermal/thermal_zone*/temp; do
+  [ -f "$t" ] && echo "$(basename $(dirname $t)): $(($(cat $t) / 1000)) C"
+done 2>/dev/null || true

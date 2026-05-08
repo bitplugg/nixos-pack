@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show failed login attempts
+# version: 0.1.0
+# author: bitplugg
+journalctl -t sshd --no-hostname -n 20 --no-pager -q 2>/dev/null | grep -i "failed\|invalid" | tail -20 || echo "no failed logins"
+echo "---"
+cat /var/log/btmp 2>/dev/null | last -f - -n 20 2>/dev/null || true

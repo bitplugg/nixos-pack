@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# description: Hex dump a file
+# version: 0.1.0
+# author: bitplugg
+file="$1"
+if [ -z "$file" ]; then echo "Usage: hexdump <file>"; exit 1; fi
+if [ ! -f "$file" ]; then echo "File not found: $file"; exit 1; fi
+xxd "$file" 2>/dev/null | head -30 || od -A x -t x1z -v "$file" 2>/dev/null | head -30

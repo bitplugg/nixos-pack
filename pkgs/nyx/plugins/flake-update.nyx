@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Update flake inputs
+# version: 0.1.0
+# author: bitplugg
+nix flake update 2>&1 | tail -20

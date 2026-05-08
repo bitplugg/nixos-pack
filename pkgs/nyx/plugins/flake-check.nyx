@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+# description: Check flake.nix for errors
+# version: 0.1.0
+# author: bitplugg
+import subprocess
+try:
+    r = subprocess.run(["nix", "flake", "check"], capture_output=True, text=True, timeout=60)
+    if r.returncode == 0:
+        print("flake check: OK")
+    else:
+        for line in r.stderr.split("\n")[-10:]:
+            print(line)
+except Exception as e:
+    print(f"error: {e}")

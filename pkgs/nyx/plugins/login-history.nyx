@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show login history
+# version: 0.1.0
+# author: bitplugg
+lastlog 2>/dev/null | head -30 || echo "no lastlog"

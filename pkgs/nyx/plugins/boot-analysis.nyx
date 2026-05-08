@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show boot analysis
+# version: 0.1.0
+# author: bitplugg
+systemd-analyze 2>/dev/null || echo "no systemd-analyze"
+echo "---"
+systemd-analyze blame 2>/dev/null | head -20 || true

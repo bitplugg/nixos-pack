@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show tmpfs usage
+# version: 0.1.0
+# author: bitplugg
+df -h -t tmpfs 2>/dev/null | head -20 || echo "no tmpfs"

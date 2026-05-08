@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: Show top memory-consuming processes
+# version: 0.1.0
+# author: bitplugg
+ps aux --sort=-%mem 2>/dev/null | head -20 || (ps aux 2>/dev/null | sort -k4 -rn | head -20)

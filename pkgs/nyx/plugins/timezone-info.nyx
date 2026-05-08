@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show timezone info
+# version: 0.1.0
+# author: bitplugg
+echo "Timezone: $(cat /etc/timezone 2>/dev/null || readlink /etc/localtime 2>/dev/null | sed "s|.*/zoneinfo/||")"
+echo "UTC time: $(date -u)"
+echo "Local time: $(date)"

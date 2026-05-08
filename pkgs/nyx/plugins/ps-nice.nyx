@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# description: Renice a process
+# version: 0.1.0
+# author: bitplugg
+pid="$1"
+prio="${2:-10}"
+if [ -z "$pid" ]; then echo "Usage: ps-nice <pid> [priority]"; exit 1; fi
+renice "$prio" -p "$pid" 2>/dev/null || echo "renice failed (try sudo)"

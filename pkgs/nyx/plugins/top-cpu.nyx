@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show top CPU-consuming processes
+# version: 0.1.0
+# author: bitplugg
+ps aux --sort=-%cpu 2>/dev/null | head -20 || (ps aux 2>/dev/null | sort -k3 -rn | head -20)
+echo "---"
+echo "Total processes: $(ps aux | wc -l)"

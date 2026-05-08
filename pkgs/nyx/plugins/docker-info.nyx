@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show Docker status
+# version: 0.1.0
+# author: bitplugg
+docker info 2>/dev/null | head -20 || echo "no docker"
+echo '---'
+docker ps --format 'table {{.Names}}\t{{.Status}}' 2>/dev/null | head -15 || true

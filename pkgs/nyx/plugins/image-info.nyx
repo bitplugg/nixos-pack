@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show image metadata
+# version: 0.1.0
+# author: bitplugg
+file="$1"
+if [ -z "$file" ]; then echo "Usage: image-info <file>"; exit 1; fi
+identify -verbose "$file" 2>/dev/null | head -30 || file "$file" 2>/dev/null || echo "no image info"

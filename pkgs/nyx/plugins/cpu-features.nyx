@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# description: Show CPU features
+# version: 0.1.0
+# author: bitplugg
+echo "CPU flags:"
+lscpu 2>/dev/null | grep Flags || (cat /proc/cpuinfo | grep flags | head -1) || true

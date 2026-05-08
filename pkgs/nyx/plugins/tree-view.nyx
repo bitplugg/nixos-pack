@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Directory tree view
+# version: 0.1.0
+# author: bitplugg
+dir="${1:-.}"
+depth="${2:-2}"
+tree -L "$depth" "$dir" 2>/dev/null | head -40 || echo "tree not installed"

@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# description: Start a simple HTTP server
+# version: 0.1.0
+# author: bitplugg
+port="${1:-8080}"
+dir="${2:-.}"
+echo "Serving $dir on http://0.0.0.0:$port"
+python3 -m http.server "$port" -d "$dir" 2>/dev/null || python -m SimpleHTTPServer "$port" 2>/dev/null

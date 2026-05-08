@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# description: Show PATH entries
+# version: 0.1.0
+# author: bitplugg
+echo "PATH entries:"
+echo "$PATH" | tr ":" "\n" | nl
+echo "---"
+echo "Total: $(echo "$PATH" | tr -cd : | wc -c) entries"

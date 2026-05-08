@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: List PCI devices
+# version: 0.1.0
+# author: bitplugg
+lspci 2>/dev/null || find /sys/bus/pci/devices -name uevent -exec head -2 {} \; 2>/dev/null | head -40 || echo "no PCI info"

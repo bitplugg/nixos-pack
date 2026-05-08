@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show swap information
+# version: 0.1.0
+# author: bitplugg
+swapon --show 2>/dev/null || cat /proc/swaps 2>/dev/null || echo "no swap"
+echo "---"
+free -h | grep -i swap

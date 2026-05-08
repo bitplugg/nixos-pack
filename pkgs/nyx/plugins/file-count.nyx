@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# description: Count files in directories
+# version: 0.1.0
+# author: bitplugg
+echo "File counts:"
+for d in /etc /var /home /nix; do
+  [ -d "$d" ] && echo "  $d: $(find $d -type f 2>/dev/null | wc -l) files"
+done

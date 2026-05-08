@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Show Rust version
+# version: 0.1.0
+# author: bitplugg
+rustc --version 2>/dev/null || echo "no rustc"
+echo "---"
+cargo --version 2>/dev/null || true

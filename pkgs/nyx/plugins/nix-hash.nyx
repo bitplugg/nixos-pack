@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# description: Compute nix-base32 hash
+# version: 0.1.0
+# author: bitplugg
+file="$1"
+if [ -z "$file" ]; then echo "Usage: nix-hash <file>"; exit 1; fi
+nix hash file "$file" 2>/dev/null || echo "nix hash failed"

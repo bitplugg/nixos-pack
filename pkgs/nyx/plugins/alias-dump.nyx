@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# description: Show defined aliases
+# version: 0.1.0
+# author: bitplugg
+echo "Shell aliases:"
+alias | sort | head -30 || echo "no aliases"

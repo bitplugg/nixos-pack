@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# description: List block devices
+# version: 0.1.0
+# author: bitplugg
+lsblk -d -o NAME,SIZE,TYPE,TRAN,ROTA,VENDOR,MODEL 2>/dev/null | head -20 || lsblk 2>/dev/null

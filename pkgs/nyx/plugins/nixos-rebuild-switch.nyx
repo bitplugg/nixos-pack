@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# description: Rebuild and switch
+# version: 0.1.0
+# author: bitplugg
+echo "Rebuilding NixOS..."
+sudo nixos-rebuild switch 2>&1 | tail -20

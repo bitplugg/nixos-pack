@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# description: Display memory information
+# version: 0.1.0
+# author: bitplugg
+free -h | awk 'NR==1{print $0} NR==2{print $0}'
+echo "---"
+grep MemTotal /proc/meminfo
+grep MemAvailable /proc/meminfo
